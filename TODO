@@ -1,0 +1,11 @@
+MVP
+- Generate IPFS DNS name
+- Program DNS discovery for SHA256SUMS file on IPFS
+- IPFS upload the SHA256SUM file
+- Request/issue Let's Encrypt certificate
+- Check CT log entry on crt.sh
+- Verify CT log entry in program
+- Download IPFS SHA256SUM from code
+- Create sub commands via cobra for release, verify, and fetch
+- Define well-known URL for discovering domain for release discovery for a domain
+

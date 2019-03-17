@@ -75,12 +75,3 @@ func hashFile(name string) (err error, sum []byte) {
 
 	return nil, sum
 }
-
-func decodeHexStringOrPanic(hs string) []byte {
-	data, err := hex.DecodeString(hs)
-	if err != nil {
-		panic(fmt.Errorf("failed to decode test data: %s", hs))
-	}
-
-	return data
-}
