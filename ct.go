@@ -36,7 +36,7 @@ func checkChain(ctx context.Context, lf logInfoFactory, chain []*x509.Certificat
 		var err error
 		issuer, err = x509util.GetIssuer(leaf, hc)
 		if err != nil {
-			glog.Errorf("Failed to get issuer online: %v", err)
+			fmt.Printf("Failed to get issuer online: %v\n", err)
 		}
 	} else {
 		issuer = chain[1]
@@ -46,7 +46,7 @@ func checkChain(ctx context.Context, lf logInfoFactory, chain []*x509.Certificat
 	// leaf for all of the SCTs, as long as the timestamp field gets updated.
 	merkleLeaf, err := ct.MerkleTreeLeafForEmbeddedSCT([]*x509.Certificate{leaf, issuer}, 0)
 	if err != nil {
-		glog.Errorf("Failed to build Merkle leaf: %v", err)
+		fmt.Printf("Failed to build Merkle leaf: %v\n", err)
 		return 0, len(leaf.SCTList.SCTList)
 	}
 
@@ -79,7 +79,7 @@ func getAndCheckSiteChain(ctx context.Context, lf logInfoFactory, target string,
 		host += ":443"
 	}
 
-	glog.Infof("Retrieve certificate chain from TLS connection to %q", host)
+	fmt.Printf("Retrieve certificate chain from TLS connection to %q", host)
 	dialer := net.Dialer{Timeout: hc.Timeout}
 	conn, err := tls.DialWithDialer(&dialer, "tcp", host, &tls.Config{InsecureSkipVerify: true})
 	if err != nil {
@@ -88,7 +88,7 @@ func getAndCheckSiteChain(ctx context.Context, lf logInfoFactory, target string,
 	defer conn.Close()
 
 	goChain := conn.ConnectionState().PeerCertificates
-	glog.Infof("Found chain of length %d", len(goChain))
+	fmt.Printf("Found chain of length %d\n", len(goChain))
 
 	// Convert base crypto/x509.Certificates to our forked x509.Certificate type.
 	chain := make([]*x509.Certificate, len(goChain))
@@ -106,7 +106,7 @@ func getAndCheckSiteChain(ctx context.Context, lf logInfoFactory, target string,
 	if len(scts) > 0 {
 		merkleLeaf, err := ct.MerkleTreeLeafFromChain(chain, ct.X509LogEntryType, 0 /* timestamp added later */)
 		if err != nil {
-			glog.Errorf("Failed to build Merkle tree leaf: %v", err)
+			fmt.Printf("Failed to build Merkle tree leaf: %v", err)
 			return chain, 0, len(scts), nil
 		}
 		for i, sctData := range scts {
@@ -129,43 +129,43 @@ func getAndCheckSiteChain(ctx context.Context, lf logInfoFactory, target string,
 func checkSCT(ctx context.Context, liFactory logInfoFactory, subject string, merkleLeaf *ct.MerkleTreeLeaf, sctData *x509.SerializedSCT, ll *loglist.LogList, hc *http.Client) bool {
 	sct, err := x509util.ExtractSCT(sctData)
 	if err != nil {
-		glog.Errorf("Failed to deserialize %s data: %v", subject, err)
-		glog.Errorf("Data: %x", sctData.Val)
+		fmt.Printf("Failed to deserialize %s data: %v\n", subject, err)
+		fmt.Printf("Data: %x\n", sctData.Val)
 		return false
 	}
-	glog.Infof("Examine %s with timestamp: %d (%v) from logID: %x", subject, sct.Timestamp, ct.TimestampToTime(sct.Timestamp), sct.LogID.KeyID[:])
+	fmt.Printf("Examine %s with timestamp: %d (%v) from logID: %x\n", subject, sct.Timestamp, ct.TimestampToTime(sct.Timestamp), sct.LogID.KeyID[:])
 	log := ll.FindLogByKeyHash(sct.LogID.KeyID)
 	if log == nil {
-		glog.Warningf("Unknown logID: %x, cannot validate %s", sct.LogID, subject)
+		fmt.Printf("Unknown logID: %x, cannot validate %s\n", sct.LogID, subject)
 		return false
 	}
 	logInfo, err := liFactory(log, hc)
 	if err != nil {
-		glog.Errorf("Failed to build log info for %q log: %v", log.Description, err)
+		fmt.Printf("Failed to build log info for %q log: %v\n", log.Description, err)
 		return false
 	}
 
 	result := true
-	glog.Infof("Validate %s against log %q...", subject, logInfo.Description)
+	fmt.Printf("Validate %s against log %q...", subject, logInfo.Description)
 	if err := logInfo.VerifySCTSignature(*sct, *merkleLeaf); err != nil {
-		glog.Errorf("Failed to verify %s signature from log %q: %v", subject, log.Description, err)
+		fmt.Printf("Failed to verify %s signature from log %q: %v\n", subject, log.Description, err)
 		result = false
 	} else {
-		glog.Infof("Validate %s against log %q... validated", subject, log.Description)
+		fmt.Printf("Validate %s against log %q... validated\n", subject, log.Description)
 	}
 
-	glog.Infof("Check %s inclusion against log %q...", subject, log.Description)
+	fmt.Printf("Check %s inclusion against log %q...\n", subject, log.Description)
 	index, err := logInfo.VerifyInclusion(ctx, *merkleLeaf, sct.Timestamp)
 	if err != nil {
 		age := time.Since(ct.TimestampToTime(sct.Timestamp))
 		if age < logInfo.MMD {
-			glog.Warningf("Failed to verify inclusion proof (%v) but %s timestamp is only %v old, less than log's MMD of %d seconds", err, subject, age, log.MaximumMergeDelay)
+			fmt.Printf("Failed to verify inclusion proof (%v) but %s timestamp is only %v old, less than log's MMD of %d seconds\n", err, subject, age, log.MaximumMergeDelay)
 		} else {
-			glog.Errorf("Failed to verify inclusion proof for %s: %v", subject, err)
+			fmt.Printf("Failed to verify inclusion proof for %s: %v\n", subject, err)
 		}
 		return false
 	}
-	glog.Infof("Check %s inclusion against log %q... included at %d", subject, log.Description, index)
+	fmt.Printf("Check %s inclusion against log %q... included at %d\n", subject, log.Description, index)
 
 	return result
 }

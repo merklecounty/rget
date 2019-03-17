@@ -10,8 +10,8 @@ import (
 	"os"
 	"time"
 
-	"github.com/golang/glog"
 	"github.com/google/certificate-transparency-go/ctutil"
+	"github.com/google/certificate-transparency-go/loglist"
 	"github.com/google/certificate-transparency-go/x509"
 	"github.com/google/certificate-transparency-go/x509util"
 	"github.com/google/go-github/v24/github"
@@ -68,35 +68,38 @@ func main() {
 	var chain []*x509.Certificate
 	var valid, invalid int
 	var domain string
+	var totalInvalid int
 
 	hc := &http.Client{Timeout: 30 * time.Second}
 	ctx := context.Background()
 	lf := ctutil.NewLogInfo
 
-	llData, err := x509util.ReadFileOrURL(loglist.AllLogListURL, hc)
+	// TODO(philips): bump to ALlLogListURL
+	llData, err := x509util.ReadFileOrURL(loglist.LogListURL, hc)
 	if err != nil {
-		glog.Exitf("Failed to read log list: %v", err)
+		fmt.Printf("Failed to read log list: %v", err)
+		os.Exit(1)
 	}
 	ll, err := loglist.NewFromJSON(llData)
 	if err != nil {
-		glog.Exitf("Failed to parse log list: %v", err)
+		fmt.Printf("Failed to parse log list: %v", err)
+		os.Exit(1)
 	}
 
-	domain = "google.com"
+	domain = "https://google.com"
 
 	// Get chain served online for TLS connection to site, and check any SCTs
 	// provided alongside on the connection along the way.
-	chain, valid, invalid, err := getAndCheckSiteChain(ctx, lf, domain, ll, hc)
+	chain, valid, invalid, err = getAndCheckSiteChain(ctx, lf, domain, ll, hc)
 	if err != nil {
-		glog.Errorf("%s: failed to get cert chain: %v", arg, err)
-		continue
+		panic(fmt.Sprintf("%s: failed to get cert chain: %v", domain, err))
 	}
-	glog.Errorf("Found %d external SCTs for %q, of which %d were validated", (valid + invalid), arg, valid)
+	fmt.Printf("Found %d external SCTs for %q, of which %d were validated\n", (valid + invalid), domain, valid)
 	totalInvalid += invalid
 
 	// Check the chain for embedded SCTs.
 	valid, invalid = checkChain(ctx, lf, chain, ll, hc)
-	glog.Errorf("Found %d embedded SCTs for %q, of which %d were validated", (valid + invalid), arg, valid)
+	fmt.Printf("Found %d embedded SCTs for %q, of which %d were validated\n", (valid + invalid), domain, valid)
 	totalInvalid += invalid
 
 	if totalInvalid > 0 {
