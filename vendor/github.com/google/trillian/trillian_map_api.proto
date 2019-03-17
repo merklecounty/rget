@@ -1,0 +1,135 @@
+// Copyright 2016 Google Inc. All Rights Reserved.
+//
+// Licensed under the Apache License, Version 2.0 (the "License");
+// you may not use this file except in compliance with the License.
+// You may obtain a copy of the License at
+//
+//     http://www.apache.org/licenses/LICENSE-2.0
+//
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an "AS IS" BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+// See the License for the specific language governing permissions and
+// limitations under the License.
+
+syntax = "proto3";
+
+option java_multiple_files = true;
+option java_package = "com.google.trillian.proto";
+option java_outer_classname = "TrillianMapApiProto";
+option go_package = "github.com/google/trillian";
+
+package trillian;
+
+import "trillian.proto";
+import "google/api/annotations.proto";
+
+// MapLeaf represents the data behind Map leaves.
+message MapLeaf {
+  // index is the location of this leaf.
+  // All indexes for a given Map must contain a constant number of bits.
+  // These are not numeric indices. Note that this is typically derived using a
+  // hash and thus the length of all indices in the map will match the number
+  // of bits in the hash function. Map entries do not have a well defined
+  // ordering and it's not possible to sequentially iterate over them.
+  bytes index = 1;
+  // leaf_hash is the tree hash of leaf_value.  This does not need to be set
+  // on SetMapLeavesRequest; the server will fill it in.
+  bytes leaf_hash = 2;
+  // leaf_value is the data the tree commits to.
+  bytes leaf_value = 3;
+  // extra_data holds related contextual data, but is not covered by any hash.
+  bytes extra_data = 4;
+}
+
+message MapLeafInclusion {
+  MapLeaf leaf = 1;
+  repeated bytes inclusion = 2;
+}
+
+message GetMapLeavesRequest {
+  int64 map_id = 1;
+  repeated bytes index = 2;
+  reserved 3;  // was 'revision'
+}
+
+// This message replaces the current implementation of GetMapLeavesRequest
+// with the difference that revision must be >=0.
+message GetMapLeavesByRevisionRequest {
+  int64 map_id = 1;
+  repeated bytes index = 2;
+  // revision >= 0.
+  int64 revision = 3;
+}
+
+message GetMapLeavesResponse {
+  repeated MapLeafInclusion map_leaf_inclusion = 2;
+  SignedMapRoot map_root = 3;
+}
+
+message SetMapLeavesRequest {
+  int64 map_id = 1;
+  // The leaves being set must have unique Index values within the request.
+  repeated MapLeaf leaves = 2;
+  reserved 3;  // was MapperMetadata (removed, replaced by metadata).
+  // Metadata that the Map should associate with the new Map root after
+  // incorporating the leaf changes.  The metadata will be reflected in the
+  // Map Root returned in the map's SetLeaves response.
+  // Map personalities should use metadata to persist any state needed later
+  // to continue mapping from an external data source.
+  reserved 4;
+  bytes metadata = 5;
+}
+
+message SetMapLeavesResponse {
+  SignedMapRoot map_root = 2;
+}
+
+message GetSignedMapRootRequest {
+  int64 map_id = 1;
+}
+
+message GetSignedMapRootByRevisionRequest {
+  int64 map_id = 1;
+  int64 revision = 2;
+}
+
+message GetSignedMapRootResponse {
+  SignedMapRoot map_root = 2;
+}
+
+message InitMapRequest {
+  int64 map_id = 1;
+}
+
+message InitMapResponse {
+  SignedMapRoot created = 1;
+}
+
+// TrillianMap defines a service which provides access to a Verifiable Map as
+// defined in the Verifiable Data Structures paper.
+service TrillianMap {
+  // GetLeaves returns an inclusion proof for each index requested.
+  // For indexes that do not exist, the inclusion proof will use nil for the empty leaf value.
+  rpc GetLeaves(GetMapLeavesRequest) returns(GetMapLeavesResponse) {}
+  rpc GetLeavesByRevision(GetMapLeavesByRevisionRequest) returns(GetMapLeavesResponse) {}
+  // SetLeaves sets the values for the provided leaves, and returns the new map root if successful.
+  // Note that if a SetLeaves request fails for a server-side reason (i.e. not an invalid request),
+  // the API user is required to retry the request before performing a different SetLeaves request.
+  rpc SetLeaves(SetMapLeavesRequest) returns(SetMapLeavesResponse) {}
+  rpc GetSignedMapRoot(GetSignedMapRootRequest) returns(GetSignedMapRootResponse) {
+      option (google.api.http) = {
+        get: "/v1beta1/maps/{map_id}/roots:latest"
+      };
+  }
+  rpc GetSignedMapRootByRevision(GetSignedMapRootByRevisionRequest) returns(GetSignedMapRootResponse) {
+      option (google.api.http) = {
+        get: "/v1beta1/maps/{map_id}/roots/{revision}"
+      };
+  }
+  rpc InitMap(InitMapRequest) returns(InitMapResponse) {
+      option (google.api.http) = {
+        post: "/v1beta1/maps/{map_id}:init"
+    };
+  }
+}

@@ -6,8 +6,14 @@ import (
 	"encoding/hex"
 	"fmt"
 	"io"
+	"net/http"
 	"os"
+	"time"
 
+	"github.com/golang/glog"
+	"github.com/google/certificate-transparency-go/ctutil"
+	"github.com/google/certificate-transparency-go/x509"
+	"github.com/google/certificate-transparency-go/x509util"
 	"github.com/google/go-github/v24/github"
 	"github.com/google/trillian/merkle"
 	"github.com/google/trillian/merkle/rfc6962"
@@ -58,6 +64,44 @@ func main() {
 	rh := t.CurrentRoot().Hash()
 	fmt.Printf("merkle root: %s\n", hex.EncodeToString(rh))
 	fmt.Printf("domain: %s.%s.%s.sget.philips.github.io.secured.dev", hex.EncodeToString(rh[:16]), hex.EncodeToString(rh[16:]), release)
+
+	var chain []*x509.Certificate
+	var valid, invalid int
+	var domain string
+
+	hc := &http.Client{Timeout: 30 * time.Second}
+	ctx := context.Background()
+	lf := ctutil.NewLogInfo
+
+	llData, err := x509util.ReadFileOrURL(loglist.AllLogListURL, hc)
+	if err != nil {
+		glog.Exitf("Failed to read log list: %v", err)
+	}
+	ll, err := loglist.NewFromJSON(llData)
+	if err != nil {
+		glog.Exitf("Failed to parse log list: %v", err)
+	}
+
+	domain = "google.com"
+
+	// Get chain served online for TLS connection to site, and check any SCTs
+	// provided alongside on the connection along the way.
+	chain, valid, invalid, err := getAndCheckSiteChain(ctx, lf, domain, ll, hc)
+	if err != nil {
+		glog.Errorf("%s: failed to get cert chain: %v", arg, err)
+		continue
+	}
+	glog.Errorf("Found %d external SCTs for %q, of which %d were validated", (valid + invalid), arg, valid)
+	totalInvalid += invalid
+
+	// Check the chain for embedded SCTs.
+	valid, invalid = checkChain(ctx, lf, chain, ll, hc)
+	glog.Errorf("Found %d embedded SCTs for %q, of which %d were validated", (valid + invalid), arg, valid)
+	totalInvalid += invalid
+
+	if totalInvalid > 0 {
+		panic("Invalid chain SCT found")
+	}
 }
 
 func hashFile(name string) (err error, sum []byte) {

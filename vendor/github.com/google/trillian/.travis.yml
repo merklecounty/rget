@@ -1,0 +1,125 @@
+sudo: true  # Only to move mysql onto ramdisk.
+
+language: go
+
+addons:
+  apt:
+    sources:
+      - mysql-5.7-trusty
+    packages:
+      - softhsm
+      - mysql-server
+      - mysql-client
+
+cache:
+  directories:
+    - "$HOME/google-cloud-sdk/"
+
+os:
+  - linux
+
+go:
+  - "1.10"
+
+go_import_path: github.com/google/trillian
+
+env:
+  - GCE_CI=${ENABLE_GCE_CI} WITH_COVERAGE=true
+  - GOFLAGS='-race'
+  - GOFLAGS='-race --tags batched_queue'
+  - GOFLAGS='-race' WITH_ETCD=true
+  - GOFLAGS='-race --tags pkcs11' WITH_PKCS11=true
+
+matrix:
+  fast_finish: true
+
+services:
+  - docker
+
+before_install:
+  - sudo mysql -e "use mysql; update user set authentication_string=PASSWORD('') where User='root'; update user set plugin='mysql_native_password';FLUSH PRIVILEGES;"
+  - sudo mysql_upgrade
+  - sudo service mysql stop
+  - |
+    if [[ "$TRAVIS_SUDO" == "true" ]]; then
+      echo "Moving MySQL data to ramdisk..."
+      sudo mkdir /mnt/ramdisk
+      sudo mount -t tmpfs -o size=1024m tmpfs /mnt/ramdisk
+      sudo mv /var/lib/mysql /mnt/ramdisk
+      sudo ln -s /mnt/ramdisk/mysql /var/lib/mysql
+    else
+     echo "MySQL data staying on disk because sudo unavailable."
+    fi
+  - sudo service mysql start
+
+install:
+  - mkdir ../protoc
+  - |
+    (
+      cd ../protoc
+      wget "https://github.com/google/protobuf/releases/download/v3.5.1/protoc-3.5.1-${TRAVIS_OS_NAME}-x86_64.zip"
+      unzip "protoc-3.5.1-${TRAVIS_OS_NAME}-x86_64.zip"
+    )
+  - export PATH="$(pwd)/../protoc/bin:$PATH"
+  # googleapis is not Go code, but it's required for .pb.go regeneration because of API dependencies.
+  - git clone --depth=1 https://github.com/googleapis/googleapis.git "$GOPATH/src/github.com/googleapis/googleapis"
+  - go get ${GOFLAGS} -d -t ./...
+  - go get github.com/golang/protobuf/proto
+  - go get github.com/golang/protobuf/protoc-gen-go
+  - go get golang.org/x/tools/cmd/stringer
+  - go get github.com/google/certificate-transparency-go
+  - go get -d -t github.com/google/certificate-transparency-go/...
+  - go install github.com/golang/{mock/mockgen,protobuf/protoc-gen-go}
+  - go get github.com/alecthomas/gometalinter
+  - gometalinter --install
+  # install vendored protoc-gen-grpc-gateway binary
+  - go install ./vendor/github.com/grpc-ecosystem/grpc-gateway/protoc-gen-grpc-gateway
+  # install vendored etcd binary
+  - go install ./vendor/github.com/coreos/etcd/cmd/etcd
+  - go install ./vendor/github.com/coreos/etcd/cmd/etcdctl
+
+
+before_script:
+  - yes | ./scripts/resetdb.sh
+
+script:
+  - set -e
+  - cd "$HOME/gopath/src/github.com/google/trillian"
+  - export GO_TEST_TIMEOUT=20m
+  - ./scripts/presubmit.sh ${WITH_COVERAGE:+--coverage}
+  - |
+      # Check re-generation didn't change anything
+      # Skip protoc-generated files (.pb.go) because protoc is not deterministic
+      # when generating file descriptors.
+      status=$(git status --porcelain | grep -v .pb.go | grep -v _string.go) || :
+      if [[ -n ${status} ]]; then
+        echo "Regenerated files differ from checked-in versions: ${status}"
+        git status
+        git diff
+        exit 1
+      fi
+  - |
+      if [[ "${WITH_ETCD}" == "true" ]]; then
+        export ETCD_DIR="${GOPATH}/bin"
+      fi
+  - |
+      ./integration/integration_test.sh
+      cd "$HOME/gopath/src/github.com/google/certificate-transparency-go"
+      ./trillian/integration/integration_test.sh
+      cd $HOME/gopath/src/github.com/google/trillian
+      HAMMER_OPTS="--operations=50" ./integration/maphammer.sh 3
+  - set +e
+
+after_success:
+  - bash <(curl -s https://codecov.io/bash)
+  - |
+      # Push up to GCE CI instance if we're running after a merge to master
+      if [[ "${GCE_CI}" == "true" ]] && [[ $TRAVIS_PULL_REQUEST == "false" ]] && [[ $TRAVIS_BRANCH == "master" ]]; then
+        . scripts/install_cloud.sh
+
+        echo ${GCLOUD_SERVICE_KEY_CI} | base64 --decode -i > ${HOME}/gcloud-service-key.json
+        gcloud auth activate-service-account --key-file ${HOME}/gcloud-service-key.json
+        rm ${HOME}/gcloud-service-key.json
+
+        . scripts/deploy_gce_ci.sh
+      fi
