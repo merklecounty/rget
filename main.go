@@ -30,41 +30,6 @@ func main() {
 		os.Exit(1)
 	}
 
-	client := github.NewClient(nil)
-	opts := &github.ListOptions{Page: 0, PerPage: 1}
-	rs, _, _ := client.Repositories.ListReleases(context.Background(), "philips", "releases-test", opts)
-	tags, _, _ := client.Repositories.ListTags(context.Background(), "philips", "releases-test", opts)
-
-	for _, r := range rs {
-		release = *r.TagName
-		commit = *tags[0].GetCommit().SHA
-		println(release)
-		println(commit)
-		for _, a := range r.Assets {
-			println(*a.URL)
-		}
-	}
-
-	t := merkle.NewInMemoryMerkleTree(rfc6962.DefaultHasher)
-	println(hex.EncodeToString(t.CurrentRoot().Hash()))
-	//t.AddLeaf([]byte(decodeHexStringOrPanic("")))
-	//t.AddLeaf([]byte(decodeHexStringOrPanic("00")))
-	//t.AddLeaf([]byte(decodeHexStringOrPanic("10")))
-	//println(hex.EncodeToString(t.CurrentRoot().Hash()))
-
-	var sha256sums string
-	for _, name := range os.Args[1:] {
-		_, sum := hashFile(name)
-		sha256sums = sha256sums + fmt.Sprintf("%x  %s\n", sum, name)
-		t.AddLeaf(sum)
-	}
-
-	fmt.Println(sha256sums)
-
-	rh := t.CurrentRoot().Hash()
-	fmt.Printf("merkle root: %s\n", hex.EncodeToString(rh))
-	fmt.Printf("domain: %s.%s.%s.sget.philips.github.io.secured.dev", hex.EncodeToString(rh[:16]), hex.EncodeToString(rh[16:]), release)
-
 	var chain []*x509.Certificate
 	var valid, invalid int
 	var domain string
@@ -105,20 +70,4 @@ func main() {
 	if totalInvalid > 0 {
 		panic("Invalid chain SCT found")
 	}
-}
-
-func hashFile(name string) (err error, sum []byte) {
-	h := sha256.New()
-	file, err := os.Open(name)
-	if err != nil {
-		panic(fmt.Sprintf("%s: %v", name, err))
-	}
-
-	_, err = io.Copy(h, file)
-	if err != nil {
-		panic(err)
-	}
-	sum = h.Sum(nil)
-
-	return nil, sum
 }

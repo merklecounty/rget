@@ -9,5 +9,6 @@ require (
 	github.com/google/trillian v1.2.1
 	github.com/grpc-ecosystem/grpc-gateway v1.8.5 // indirect
 	go.opencensus.io v0.19.1 // indirect
+	golang.org/x/net v0.0.0-20190313220215-9f648a60d977 // indirect
 	google.golang.org/genproto v0.0.0-20190307195333-5fe7a883aa19 // indirect
 )
