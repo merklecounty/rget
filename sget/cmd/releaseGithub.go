@@ -15,6 +15,7 @@
 package cmd
 
 import (
+	"bytes"
 	"context"
 	"crypto/sha256"
 	"encoding/hex"
@@ -27,6 +28,7 @@ import (
 	"github.com/google/go-github/v24/github"
 	"github.com/google/trillian/merkle"
 	"github.com/google/trillian/merkle/rfc6962"
+	shell "github.com/ipfs/go-ipfs-api"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
 	"golang.org/x/net/context/ctxhttp"
@@ -94,6 +96,7 @@ func releaseGithubMain(cmd *cobra.Command, args []string) {
 
 	t := merkle.NewInMemoryMerkleTree(rfc6962.DefaultHasher)
 
+	var buf bytes.Buffer
 	for _, r := range releases {
 		urls := []string{}
 		for _, a := range r.Assets {
@@ -112,13 +115,25 @@ func releaseGithubMain(cmd *cobra.Command, args []string) {
 				panic(err)
 			}
 
-			fmt.Printf("%x  %s\n", sum, u)
+			buf.Write([]byte(fmt.Sprintf("%x  %s\n", sum, u)))
 			t.AddLeaf(sum)
 		}
 	}
 	rh := t.CurrentRoot().Hash()
 	fmt.Printf("merkle root: %s\n", hex.EncodeToString(rh))
 	fmt.Printf("domain: %s\n", githubDomain(owner, repo, tag, rh))
+
+	sha256sums := buf.String()
+	fmt.Printf(sha256sums)
+
+	sh := shell.NewShell("localhost:5001")
+	cid, err := sh.Add(&buf)
+	if err != nil {
+		fmt.Fprintf(os.Stderr, "error: %s", err)
+		os.Exit(1)
+	}
+	fmt.Printf("added %s", cid)
+
 }
 
 func githubDomain(owner, repo, tag string, digest []byte) string {
