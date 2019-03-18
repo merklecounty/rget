@@ -118,9 +118,11 @@ func releaseGithubMain(cmd *cobra.Command, args []string) {
 	}
 	rh := t.CurrentRoot().Hash()
 	fmt.Printf("merkle root: %s\n", hex.EncodeToString(rh))
-	fmt.Printf("domain: %s.%s.%s.sget.philips.github.io.secured.dev", hex.EncodeToString(rh[:16]), hex.EncodeToString(rh[16:]), tag)
+	fmt.Printf("domain: %s\n", githubDomain(owner, repo, tag, rh))
+}
 
-	println(hex.EncodeToString(t.CurrentRoot().Hash()))
+func githubDomain(owner, repo, tag string, digest []byte) string {
+	return fmt.Sprintf("%s.%s.%s.%s.%s.github.io.secured.dev", hex.EncodeToString(digest[:16]), hex.EncodeToString(digest[16:]), tag, repo, owner)
 }
 
 func allReleases(client *github.Client, owner string, repo string) ([]github.RepositoryRelease, error) {
