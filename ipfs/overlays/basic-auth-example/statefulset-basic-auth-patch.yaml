@@ -1,0 +1,16 @@
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: ipfs-cluster
+spec:
+  template:
+    spec:
+      containers:
+        - name: ipfs-cluster
+          env:
+          - name: CLUSTER_RESTAPI_BASICAUTHCREDS
+            valueFrom:
+              secretKeyRef:
+                name: secret-config
+                key: basicauthcreds
+

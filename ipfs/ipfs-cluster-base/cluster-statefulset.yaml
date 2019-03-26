@@ -51,13 +51,6 @@ spec:
             initialDelaySeconds: 30
             timeoutSeconds: 5
             periodSeconds: 15
-          readinessProbe:
-            httpGet:
-              path: /api/v0/id
-              port: api
-            initialDelaySeconds: 30
-            periodSeconds: 30
-            timeoutSeconds: 5
           volumeMounts:
             - mountPath: /data/ipfs
               name: ipfs-storage
@@ -68,16 +61,11 @@ spec:
         - name: ipfs-cluster
           image: "ipfs/ipfs-cluster:latest"
           imagePullPolicy: IfNotPresent
-          command: ["sh", "/custom/entrypoint.sh"]
+          command: ["sh", "/custom/cluster-entrypoint.sh"]
           envFrom:
             - configMapRef:
                 name: env-config
           env:
-            - name: BOOTSTRAP_PEER_ID
-              valueFrom:
-                configMapRef:
-                  name: env-config
-                  key: bootstrap-peer-id
             - name: BOOTSTRAP_PEER_PRIV_KEY
               valueFrom:
                 secretKeyRef:
@@ -108,13 +96,6 @@ spec:
             initialDelaySeconds: 5
             timeoutSeconds: 5
             periodSeconds: 10
-          readinessProbe:
-            httpGet:
-              path: /id
-              port: api-http
-            initialDelaySeconds: 30
-            periodSeconds: 30
-            timeoutSeconds: 5
           volumeMounts:
             - name: cluster-storage
               mountPath: /data/ipfs-cluster

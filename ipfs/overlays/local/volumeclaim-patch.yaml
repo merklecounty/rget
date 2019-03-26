@@ -1,0 +1,22 @@
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: ipfs-cluster
+spec:
+  volumeClaimTemplates:
+    - metadata:
+        name: cluster-storage
+      spec:
+        storageClassName: standard
+        accessModes: ["ReadWriteOnce"]
+        resources:
+          requests:
+            storage: 1Gi
+    - metadata:
+        name: ipfs-storage
+      spec:
+        storageClassName: standard
+        accessModes: ["ReadWriteOnce"]
+        resources:
+          requests:
+            storage: 10Gi

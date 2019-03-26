@@ -1,6 +1,0 @@
-apiVersion: v1
-kind: ConfigMap
-metadata:
-  name: env-config
-data:
-  bootstrap-peer-id: QmaFPBSbK483nPosgFtCyHiXz5bCLQyUvkBSKUu7N2GZ6P

@@ -3,7 +3,7 @@ kind: ConfigMap
 metadata:
   name: ipfs-cluster-set-bootstrap-conf
 data:
-  entrypoint.sh: |
+  cluster-entrypoint.sh: |
     #!/bin/sh
     user=ipfs
 
@@ -24,7 +24,7 @@ data:
       CLUSTER_PRIVATEKEY=${BOOTSTRAP_PEER_PRIV_KEY} \
       exec ipfs-cluster-service daemon --upgrade
     else
-      BOOTSTRAP_ADDR=/dns4/${SVC_NAME}-0/tcp/9096/ipfs/${BOOTSTRAP_PEER_ID}
+      BOOTSTRAP_ADDR=/dns4/${SVC_NAME}-0.${SVC_NAME}/tcp/9096/ipfs/${BOOTSTRAP_PEER_ID}
 
       if [ -z $BOOTSTRAP_ADDR ]; then
         exit 1
@@ -35,24 +35,23 @@ data:
 
   configure-ipfs.sh: |
     #!/bin/sh
-    set -e
     set -x
-    user=ipfs
     # This is a custom entrypoint for k8s designed to run ipfs nodes in an appropriate
     # setup for production scenarios.
 
+    user=root
     mkdir -p /data/ipfs && chown -R ipfs /data/ipfs
 
-    if [ -f /data/ipfs/config ]; then
-      if [ -f /data/ipfs/repo.lock ]; then
-        rm /data/ipfs/repo.lock
-      fi
-      exit 0
+    user=ipfs
+    if [ -f /data/ipfs/repo.lock ]; then
+      rm /data/ipfs/repo.lock
     fi
 
-    ipfs init --profile=badgerds,server
-    ipfs config --json Addresses.API /ip4/0.0.0.0/tcp/5001
-    ipfs config --json Addresses.Gateway /ip4/0.0.0.0/tcp/8080
-    ipfs config --json Swarm.ConnMgr.HighWater 2000
-    ipfs config --json Datastore.BloomFilterSize 1048576
-    ipfs config Datastore.StorageMax 100GB
+    ipfs init --profile=badgerds,server 
+    exit 0
+    # ipfs config --json Addresses.Swarm '["/ip4/0.0.0.0/tcp/4001"]'
+    # ipfs config --json Addresses.API /ip4/0.0.0.0/tcp/5001
+    # ipfs config --json Addresses.Gateway /ip4/0.0.0.0/tcp/8080
+    # ipfs config --json Swarm.ConnMgr.HighWater 2000
+    # ipfs config --json Datastore.BloomFilterSize 1048576
+    # ipfs config Datastore.StorageMax 180GB

@@ -1,0 +1,18 @@
+namePrefix: test-
+
+bases:
+  - ../../ipfs-cluster-base
+  - ../../ipfs-cluster-ingress-base
+
+secretGenerator:
+  - name: secret-config
+    commands:
+      cluster-secret: "cat secret/cluster-secret"
+      bootstrap-peer-priv-key: "cat secret/bootstrap-peer-priv-key"
+    type: Opaque
+
+patchesStrategicMerge:
+  - volumeclaim-patch.yaml
+  - env-configmap.yaml
+  - statefulset-annotations-patch.yaml
+  - service-patch.yaml

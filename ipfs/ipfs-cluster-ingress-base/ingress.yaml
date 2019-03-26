@@ -1,0 +1,17 @@
+apiVersion: extensions/v1beta1
+kind: Ingress
+metadata:
+  name: ipfs-cluster
+  annotations:
+    kubernetes.io/ingress.class: nginx
+
+spec:
+  rules:
+    - host: example.com
+      http:
+        paths:
+          - path: /
+            backend:
+              serviceName: ipfs-cluster
+              servicePort: api-http
+
