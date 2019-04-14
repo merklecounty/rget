@@ -1,8 +1,0 @@
-bases:
-  - ../../ipfs-cluster-base
-
-resources:
-  - secret.yaml
-
-patches:
-  - statefulset-basic-auth-patch.yaml

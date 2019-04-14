@@ -1,7 +1,0 @@
-apiVersion: apps/v1
-kind: StatefulSet
-metadata:
-  name: ipfs-cluster
-  annotations:
-    io.kubernetes.cri.untrusted-workload: "true"
-
