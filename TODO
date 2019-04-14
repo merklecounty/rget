@@ -1,4 +1,6 @@
 MVP
+- Save sha256sums by merkle tree root into git, follow code in release-github
+- Have server serve up the right file based on the domain name of the request or 404
 - Generate IPFS DNS name https://godoc.org/google.golang.org/api/dns/v1
 - Program DNS discovery for SHA256SUMS file on IPFS
 - Request/issue Let's Encrypt certificate
