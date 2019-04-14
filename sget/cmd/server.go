@@ -16,7 +16,6 @@ package cmd
 
 import (
 	"bytes"
-	"encoding/hex"
 	"fmt"
 	"io"
 	"log"
@@ -29,6 +28,7 @@ import (
 	"path/filepath"
 	"time"
 
+	"github.com/multiformats/go-multibase"
 	"github.com/multiformats/go-multihash"
 	"gopkg.in/src-d/go-git.v4"
 	"gopkg.in/src-d/go-git.v4/plumbing/object"
@@ -80,10 +80,13 @@ func (r repo) handler(resp http.ResponseWriter, req *http.Request) {
 
 	sum, err := readerDigest(buf)
 	mhbuf, _ := multihash.EncodeName(sum, "sha256")
-	mhhex := hex.EncodeToString(mhbuf)
-	println(mhhex)
 
-	filename := filepath.Join(directory, mhhex)
+	mb, err := multibase.Encode(multibase.Base58BTC, mhbuf)
+	if err != nil {
+		panic(err)
+	}
+
+	filename := filepath.Join(directory, mb)
 	err = ioutil.WriteFile(filename, body, 0644)
 	if err != nil {
 		panic(err)
@@ -94,7 +97,7 @@ func (r repo) handler(resp http.ResponseWriter, req *http.Request) {
 		panic(err)
 	}
 
-	_, err = w.Add(mhhex)
+	_, err = w.Add(mb)
 	if err != nil {
 		panic(err)
 	}
