@@ -13,7 +13,6 @@ require (
 	github.com/google/trillian v1.2.1
 	github.com/grpc-ecosystem/grpc-gateway v1.8.5 // indirect
 	github.com/ipfs/go-ipfs-api v0.0.1
-	github.com/jessevdk/go-flags v1.4.0 // indirect
 	github.com/kisielk/errcheck v1.2.0 // indirect
 	github.com/kkdai/bstream v0.0.0-20181106074824-b3251f7901ec // indirect
 	github.com/minio/sha256-simd v0.0.0-20190317211740-0d7ea3c244ee // indirect
@@ -21,6 +20,7 @@ require (
 	github.com/mr-tron/base58 v1.1.1 // indirect
 	github.com/multiformats/go-multiaddr v0.0.2 // indirect
 	github.com/multiformats/go-multiaddr-dns v0.0.2 // indirect
+	github.com/multiformats/go-multihash v0.0.1
 	github.com/onsi/ginkgo v1.8.0 // indirect
 	github.com/onsi/gomega v1.5.0 // indirect
 	github.com/spf13/cobra v0.0.3
@@ -31,4 +31,5 @@ require (
 	golang.org/x/sys v0.0.0-20190316082340-a2f829d7f35f // indirect
 	golang.org/x/tools v0.0.0-20190318005222-63e6ed9258fa // indirect
 	google.golang.org/genproto v0.0.0-20190307195333-5fe7a883aa19 // indirect
+	gopkg.in/src-d/go-git.v4 v4.10.0
 )

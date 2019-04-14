@@ -2,10 +2,7 @@ package main
 
 import (
 	"context"
-	"crypto/sha256"
-	"encoding/hex"
 	"fmt"
-	"io"
 	"net/http"
 	"os"
 	"time"
@@ -14,16 +11,15 @@ import (
 	"github.com/google/certificate-transparency-go/loglist"
 	"github.com/google/certificate-transparency-go/x509"
 	"github.com/google/certificate-transparency-go/x509util"
-	"github.com/google/go-github/v24/github"
-	"github.com/google/trillian/merkle"
-	"github.com/google/trillian/merkle/rfc6962"
 )
 
 func main() {
-	var (
-		release string
-		commit  string
-	)
+	/*
+		var (
+			release string
+			commit  string
+		)
+	*/
 
 	if len(os.Args) < 2 {
 		fmt.Printf("usage: sget file file file\n")

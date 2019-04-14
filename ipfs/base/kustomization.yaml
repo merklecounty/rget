@@ -1,0 +1,5 @@
+kind: ""
+apiversion: ""
+resources:
+- service.yaml
+- statefulset.yaml

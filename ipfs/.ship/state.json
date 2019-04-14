@@ -1,0 +1,28 @@
+{
+  "v1": {
+    "config": null,
+    "helmValues": "replicaCount: 1\n\nimage: ipfs/go-ipfs:v0.4.9\n\nservice:\n  type: ClusterIP\n\nresources: {}\n\npersistence:\n  enabled: false\n  ## ipfs data Persistent Volume Storage Class\n  ## If defined, storageClassName: \u003cstorageClass\u003e\n  ## If set to \"-\", storageClassName: \"\", which disables dynamic provisioning\n  ## If undefined (the default) or set to null, no storageClassName spec is\n  ##   set, choosing the default provisioner.  (gp2 on AWS, standard on\n  ##   GKE, AWS \u0026 OpenStack)\n  ##\n  # storageClass: \"-\"\n  size: \"8Gi\"\n  accessModes:\n    - ReadWriteOnce\n",
+    "releaseName": "ipfs",
+    "namespace": "sget",
+    "helmValuesDefaults": "replicaCount: 1\n\nimage: ipfs/go-ipfs:v0.4.9\n\nservice:\n  type: ClusterIP\n\nresources: {}\n\npersistence:\n  enabled: true\n  ## ipfs data Persistent Volume Storage Class\n  ## If defined, storageClassName: \u003cstorageClass\u003e\n  ## If set to \"-\", storageClassName: \"\", which disables dynamic provisioning\n  ## If undefined (the default) or set to null, no storageClassName spec is\n  ##   set, choosing the default provisioner.  (gp2 on AWS, standard on\n  ##   GKE, AWS \u0026 OpenStack)\n  ##\n  # storageClass: \"-\"\n  size: \"8Gi\"\n  accessModes:\n    - ReadWriteOnce\n",
+    "upstream": "github.com/helm/charts/stable/ipfs",
+    "metadata": {
+      "applicationType": "helm",
+      "icon": "https://raw.githubusercontent.com/ipfs/logo/master/raster-generated/ipfs-logo-128-ice-text.png",
+      "name": "ipfs",
+      "releaseNotes": "Typo fix in ipfs/README.md: a IPFS deployment-\u003ean IPFS deployment (#4986)\n\n* Add Version for ipfs\n\nAdd Version for ipfs\n\n* Typo fix in ipfs/README.md\n\nTypo fix in ipfs/README.md",
+      "version": "0.2.2"
+    },
+    "contentSHA": "d002c2f01c326ff500d815a34e85086eef9a6ed568a043641d8432df84076029",
+    "lifecycle": {
+      "stepsCompleted": {
+        "intro": true,
+        "kustomize": true,
+        "kustomize-intro": true,
+        "outro": true,
+        "render": true,
+        "values": true
+      }
+    }
+  }
+}
