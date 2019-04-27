@@ -20,6 +20,7 @@ require (
 	github.com/mr-tron/base58 v1.1.1 // indirect
 	github.com/multiformats/go-multiaddr v0.0.2 // indirect
 	github.com/multiformats/go-multiaddr-dns v0.0.2 // indirect
+	github.com/multiformats/go-multibase v0.0.1
 	github.com/multiformats/go-multihash v0.0.1
 	github.com/onsi/ginkgo v1.8.0 // indirect
 	github.com/onsi/gomega v1.5.0 // indirect
