@@ -15,24 +15,21 @@
 package cmd
 
 import (
-	"bytes"
 	"fmt"
 	"io"
+	"io/ioutil"
 	"log"
 	"net/http"
-
-	"github.com/spf13/cobra"
-
-	"io/ioutil"
 	"os"
 	"path/filepath"
 	"time"
 
-	"github.com/multiformats/go-multibase"
-	"github.com/multiformats/go-multihash"
+	"github.com/spf13/cobra"
 	"gopkg.in/src-d/go-git.v4"
 	"gopkg.in/src-d/go-git.v4/plumbing/object"
 	githttp "gopkg.in/src-d/go-git.v4/plumbing/transport/http"
+
+	"github.com/philips/sget/sgethash"
 )
 
 // serverCmd represents the server command
@@ -76,17 +73,10 @@ func (r repo) handler(resp http.ResponseWriter, req *http.Request) {
 		panic(err)
 	}
 
-	buf := bytes.NewBuffer(body)
+	l := sgethash.FromSHA256File(string(body))
 
-	sum, err := readerDigest(buf)
-	mhbuf, _ := multihash.EncodeName(sum, "sha256")
-
-	mb, err := multibase.Encode(multibase.Base58BTC, mhbuf)
-	if err != nil {
-		panic(err)
-	}
-
-	filename := filepath.Join(directory, mb)
+	domain := l.Domain()
+	filename := filepath.Join(directory, domain)
 	err = ioutil.WriteFile(filename, body, 0644)
 	if err != nil {
 		panic(err)
@@ -97,7 +87,7 @@ func (r repo) handler(resp http.ResponseWriter, req *http.Request) {
 		panic(err)
 	}
 
-	_, err = w.Add(mb)
+	_, err = w.Add(domain)
 	if err != nil {
 		panic(err)
 	}

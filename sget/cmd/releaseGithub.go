@@ -15,23 +15,17 @@
 package cmd
 
 import (
-	"bytes"
 	"context"
-	"crypto/sha256"
-	"encoding/hex"
 	"fmt"
-	"io"
-	"net/http"
 	"os"
-	"time"
+	"strings"
 
 	"github.com/google/go-github/v24/github"
-	"github.com/google/trillian/merkle"
-	"github.com/google/trillian/merkle/rfc6962"
 	shell "github.com/ipfs/go-ipfs-api"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
-	"golang.org/x/net/context/ctxhttp"
+
+	"github.com/philips/sget/sgethash"
 )
 
 // releaseGithubCmd represents the releaseGithub command
@@ -66,13 +60,6 @@ func releaseGithubMain(cmd *cobra.Command, args []string) {
 	client := github.NewClient(nil)
 	ctx := context.Background()
 
-	tr := &http.Transport{
-		MaxIdleConns:       10,
-		IdleConnTimeout:    30 * time.Second,
-		DisableCompression: true,
-	}
-	hc := &http.Client{Transport: tr}
-
 	owner := viper.GetString("owner")
 	repo := viper.GetString("repo")
 	tag := viper.GetString("tag")
@@ -94,50 +81,26 @@ func releaseGithubMain(cmd *cobra.Command, args []string) {
 		os.Exit(1)
 	}
 
-	t := merkle.NewInMemoryMerkleTree(rfc6962.DefaultHasher)
-
-	var buf bytes.Buffer
+	urls := sgethash.URLSumList{}
 	for _, r := range releases {
-		urls := []string{}
 		for _, a := range r.Assets {
-			urls = append(urls, *a.BrowserDownloadURL)
+			urls.AddURL(*a.BrowserDownloadURL)
 		}
-		urls = append(urls, *r.ZipballURL, *r.TarballURL)
-
-		for _, u := range urls {
-			resp, err := ctxhttp.Get(ctx, hc, u)
-			if err != nil {
-				panic(err)
-			}
-			sum, err := readerDigest(resp.Body)
-			resp.Body.Close()
-			if err != nil {
-				panic(err)
-			}
-
-			buf.Write([]byte(fmt.Sprintf("%x  %s\n", sum, u)))
-			t.AddLeaf(sum)
-		}
+		urls.AddURL(*r.ZipballURL)
+		urls.AddURL(*r.TarballURL)
 	}
-	rh := t.CurrentRoot().Hash()
-	fmt.Printf("merkle root: %s\n", hex.EncodeToString(rh))
-	fmt.Printf("domain: %s\n", githubDomain(owner, repo, tag, rh))
 
-	sha256sums := buf.String()
-	fmt.Printf(sha256sums)
+	sha256sumfile := urls.SHA256SumFile()
+	fmt.Printf("%v\n", sha256sumfile)
 
 	sh := shell.NewShell("localhost:5001")
-	cid, err := sh.Add(&buf)
+	cid, err := sh.Add(strings.NewReader(sha256sumfile))
 	if err != nil {
 		fmt.Fprintf(os.Stderr, "error: %s", err)
 		os.Exit(1)
 	}
 	fmt.Printf("added %s", cid)
 
-}
-
-func githubDomain(owner, repo, tag string, digest []byte) string {
-	return fmt.Sprintf("%s.%s.%s.%s.%s.github.io.secured.dev", hex.EncodeToString(digest[:16]), hex.EncodeToString(digest[16:]), tag, repo, owner)
 }
 
 func allReleases(client *github.Client, owner string, repo string) ([]github.RepositoryRelease, error) {
@@ -154,16 +117,4 @@ func allReleases(client *github.Client, owner string, repo string) ([]github.Rep
 		}
 	}
 	return nil, nil
-}
-
-func readerDigest(r io.Reader) (sum []byte, err error) {
-	h := sha256.New()
-
-	_, err = io.Copy(h, r)
-	if err != nil {
-		panic(err)
-	}
-	sum = h.Sum(nil)
-
-	return sum, nil
 }
