@@ -1,15 +1,35 @@
-MVP
-- Save sha256sums by merkle tree root into git, follow code in release-github
-- Have server serve up the right file based on the domain name of the request or 404
-- Generate IPFS DNS name https://godoc.org/google.golang.org/api/dns/v1
-- Program DNS discovery for SHA256SUMS file on IPFS
+# MVP
+
+## MVP - Single File GH Release Test
+
+Use: Create a certificate for the tar ball release of a GitHub release only.
+Proof points:
+- Git log for sha files generated from Github
+- Webservice serving up sha files for wildcard domain from git
 - Request/issue Let's Encrypt certificate
-- Check CT log entry on crt.sh
-- Verify CT log entry in program
-- Download IPFS SHA256SUM from code
+- Check CT log entry on crt.sh via a subcommand
+- Verify CT log entry in program via a subcommand
+
+## MVP+1 - All file GH Release Test
+
+Use: Prove that the sha256sum can support all files for a given release
+
+- Introduce database to hold onto sha256sum info and index to org/project/release tuple
+
+## MVP+2 - All digests for a Docker image
+
+Use: Prove that the scheme works for docker images as well
+
+# Public Release
+
+## Public Release
+
+- Index top NNN docker images and github repos into the service
+- Define roadmap for self-hosting
 - Define well-known URL for discovering domain for release discovery for a domain
 
 
-DONE
-- IPFS upload the SHA256SUM file
+# DONE
 - Create sub commands via cobra
+- Git log for sha files
+- Sha256sum generation from GitHub
