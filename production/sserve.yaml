@@ -1,0 +1,33 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: sserve
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      name: sserve
+  template:
+    metadata:
+      labels:
+        name: sserve
+    spec:
+      containers:
+      - name: git-sync
+        image: k8s.gcr.io/git-sync:v3.0.1
+        volumeMounts:
+        - name: sums
+          mountPath: /tmp/git
+        env:
+        - name: GIT_SYNC_REPO
+          value: https://github.com/philips/releases-test.git
+        - name: GIT_SYNC_DEST
+          value: git-sync
+      - name: nginx
+        image: nginx
+        volumeMounts:
+        - name: sums
+          mountPath: /usr/share/nginx/html
+      volumes:
+      - name: sums
+        emptyDir: {}
