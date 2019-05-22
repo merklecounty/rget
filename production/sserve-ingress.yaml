@@ -1,11 +1,26 @@
 apiVersion: extensions/v1beta1
 kind: Ingress
 metadata:
-  name: sserve-ingress
   annotations:
-    kubernetes.io/ingress.class: "nginx"
     kubernetes.io/ingress.allow-http: "true"
+  name: sserve-ingress
+  namespace: sget
 spec:
   backend:
     serviceName: sserve-service
     servicePort: 80
+  rules:
+  - host: 5c793eed08df469f8a40a0465f767677.a73ecbf830829713e0037efd9b1a357e.secured.ifup.org
+    http:
+      paths:
+      - backend:
+          serviceName: sserve-service
+          servicePort: 80
+  - host: 5c793eed08df469f8a40a0465f767677.secured.ifup.org
+    http:
+      paths:
+      - backend:
+          serviceName: sserve-service
+          servicePort: 80
+  tls:
+  - secretName: 5c793eed08df469f8a40a0465f767677
