@@ -36,7 +36,7 @@ spec:
       - name: nginx-config
         configMap:
           name: nginx-config
-      - name: foo
+      - name: foe
         emptyDir: {}
 ---
 apiVersion: v1
@@ -47,10 +47,11 @@ data:
   default.conf: |
     server {
        listen       80;
-       server_name   ~^(?<domain>.+)\.secured-test\.ifup\.org$;
+       server_name   ~^(?<subdomain>.+\..+)\..*\.ifup.org$;
 
        location / {
+         default_type text/plain;
          root /usr/share/nginx/html;
-         try_files /sums/$domain =404;
+         try_files /sums/$subdomain =404;
         }
     }
