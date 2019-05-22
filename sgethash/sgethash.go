@@ -38,7 +38,7 @@ func FromSHA256SumFile(file string) URLSumList {
 	return list
 }
 
-func (s URLSumList) AddURL(url string) error {
+func (s *URLSumList) AddURL(url string) error {
 	ctx := context.Background()
 	tr := &http.Transport{
 		MaxIdleConns:       10,
@@ -57,7 +57,7 @@ func (s URLSumList) AddURL(url string) error {
 		return err
 	}
 
-	s = append(s, URLSum{url, sum})
+	*s = append(*s, URLSum{url, sum})
 
 	return nil
 }
