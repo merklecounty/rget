@@ -22,12 +22,35 @@ spec:
         - name: GIT_SYNC_REPO
           value: https://github.com/philips/releases-test.git
         - name: GIT_SYNC_DEST
-          value: git-sync
+          value: sums
       - name: nginx
         image: nginx
         volumeMounts:
+        - name: nginx-config
+          mountPath: /etc/nginx/conf.d/
         - name: sums
           mountPath: /usr/share/nginx/html
       volumes:
       - name: sums
         emptyDir: {}
+      - name: nginx-config
+        configMap:
+          name: nginx-config
+      - name: foo
+        emptyDir: {}
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: nginx-config
+data:
+  default.conf: |
+    server {
+       listen       80;
+       server_name   ~^(?<domain>.+)\.secured-test\.ifup\.org$;
+
+       location / {
+         root /usr/share/nginx/html;
+         try_files /sums/$domain =404;
+        }
+    }

@@ -7,5 +7,5 @@ metadata:
     kubernetes.io/ingress.global-static-ip-name: sserve
 spec:
   backend:
-    serviceName: sserve
-    servicePort: 30000
+    serviceName: sserve-service
+    servicePort: 80
