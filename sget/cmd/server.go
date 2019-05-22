@@ -66,17 +66,29 @@ func (r repo) handler(resp http.ResponseWriter, req *http.Request) {
 		return
 	}
 
-	req.ParseForm()
-
-	body, err := ioutil.ReadAll(req.Body)
+	m, err := req.MultipartReader()
 	if err != nil {
 		panic(err)
 	}
 
-	l := sgethash.FromSHA256File(string(body))
+	p, err := m.NextPart()
+	if err != nil {
+		panic(err)
+	}
+
+	body, err := ioutil.ReadAll(p)
+	if err != nil {
+		panic(err)
+	}
+
+	l := sgethash.FromSHA256SumFile(string(body))
 
 	domain := l.Domain()
 	filename := filepath.Join(directory, domain)
+	if _, err := os.Stat(filename); !os.IsNotExist(err) {
+		return // already have this file
+	}
+
 	err = ioutil.WriteFile(filename, body, 0644)
 	if err != nil {
 		panic(err)
@@ -100,10 +112,10 @@ func (r repo) handler(resp http.ResponseWriter, req *http.Request) {
 	// Commits the current staging are to the repository, with the new file
 	// just created. We should provide the object.Signature of Author of the
 	// commit.
-	co, err := w.Commit("example go-git commit", &git.CommitOptions{
+	co, err := w.Commit(fmt.Sprintf("add: %v", domain), &git.CommitOptions{
 		Author: &object.Signature{
-			Name:  "John Doe",
-			Email: "john@doe.org",
+			Name:  "sget bot",
+			Email: "sget@ifup.org",
 			When:  time.Now(),
 		},
 	})
@@ -139,25 +151,38 @@ func server() {
 		directory: directory,
 	}
 
-	// Clone the given repository to the given directory
-	fmt.Printf("git clone %s %s --recursive\n", url, directory)
-	r, err := git.PlainClone(directory, false, &git.CloneOptions{
-		URL:               url,
-		RecurseSubmodules: git.DefaultSubmoduleRecursionDepth,
-	})
+	if _, err := os.Stat(directory); os.IsNotExist(err) {
+		fmt.Printf("git clone %s %s --recursive\n", url, directory)
+		r, err := git.PlainClone(directory, false, &git.CloneOptions{
+			URL:               url,
+			RecurseSubmodules: git.DefaultSubmoduleRecursionDepth,
+		})
+		if err != nil {
+			panic(err)
+		}
 
-	repo.repo = *r
+		repo.repo = *r
+	} else {
+		r, err := git.PlainOpen(directory)
+		if err != nil {
+			panic(err)
+		}
+		repo.repo = *r
 
+		w, err := r.Worktree()
+		if err != nil {
+			panic(err)
+		}
+
+		err = w.Pull(&git.PullOptions{RemoteName: "origin"})
+	}
+
+	ref, err := repo.repo.Head()
 	if err != nil {
 		panic(err)
 	}
 
-	ref, err := r.Head()
-	if err != nil {
-		panic(err)
-	}
-
-	_, err = r.CommitObject(ref.Hash())
+	_, err = repo.repo.CommitObject(ref.Hash())
 	if err != nil {
 		panic(err)
 	}

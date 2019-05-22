@@ -100,7 +100,6 @@ func releaseGithubMain(cmd *cobra.Command, args []string) {
 		os.Exit(1)
 	}
 	fmt.Printf("added %s", cid)
-
 }
 
 func allReleases(client *github.Client, owner string, repo string) ([]github.RepositoryRelease, error) {
