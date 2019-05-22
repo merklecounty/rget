@@ -3,8 +3,8 @@ kind: Ingress
 metadata:
   name: sserve-ingress
   annotations:
+    kubernetes.io/ingress.class: "nginx"
     kubernetes.io/ingress.allow-http: "true"
-    kubernetes.io/ingress.global-static-ip-name: sserve
 spec:
   backend:
     serviceName: sserve-service

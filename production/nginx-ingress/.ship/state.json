@@ -1,0 +1,15 @@
+{
+  "v1": {
+    "config": null,
+    "shipVersion": {
+      "version": "0.44.0",
+      "git": "d27319b",
+      "buildTime": "2019-05-20T18:49:30Z",
+      "dependencies": {
+        "helm": "v2.13.0",
+        "kustomize": "v2.0.3",
+        "terraform": "v0.11.14"
+      }
+    }
+  }
+}
