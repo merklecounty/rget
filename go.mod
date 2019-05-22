@@ -12,6 +12,7 @@ require (
 	github.com/google/go-github/v24 v24.0.1
 	github.com/google/trillian v1.2.1
 	github.com/grpc-ecosystem/grpc-gateway v1.8.5 // indirect
+	github.com/inconshreveable/mousetrap v1.0.0 // indirect
 	github.com/ipfs/go-ipfs-api v0.0.1
 	github.com/kisielk/errcheck v1.2.0 // indirect
 	github.com/kkdai/bstream v0.0.0-20181106074824-b3251f7901ec // indirect
