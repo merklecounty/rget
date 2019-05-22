@@ -4,9 +4,11 @@
 
 Use: Create a certificate for the tar ball release of a GitHub release only.
 Proof points:
-- Git log for sha files generated from Github
-- Webservice serving up sha files for wildcard domain from git
-- Request/issue Let's Encrypt certificate
+x Create sub commands via cobra
+x Sha256sum generation from GitHub
+x Git log for sha files generated from Github
+x Webservice serving up sha files for wildcard domain from git
+x Request/issue Let's Encrypt certificate
 - Check CT log entry on crt.sh via a subcommand
 - Verify CT log entry in program via a subcommand
 
@@ -27,9 +29,3 @@ Use: Prove that the scheme works for docker images as well
 - Index top NNN docker images and github repos into the service
 - Define roadmap for self-hosting
 - Define well-known URL for discovering domain for release discovery for a domain
-
-
-# DONE
-- Create sub commands via cobra
-- Git log for sha files
-- Sha256sum generation from GitHub
