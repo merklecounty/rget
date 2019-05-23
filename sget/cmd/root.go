@@ -16,6 +16,8 @@ package cmd
 
 import (
 	"context"
+	"crypto/sha256"
+	"encoding/hex"
 	"fmt"
 	"net/http"
 	"os"
@@ -25,6 +27,7 @@ import (
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
 
+	"github.com/cavaliercoder/grab"
 	"github.com/google/certificate-transparency-go/ctutil"
 	"github.com/google/certificate-transparency-go/loglist"
 	"github.com/google/certificate-transparency-go/x509"
@@ -143,4 +146,27 @@ func get(cmd *cobra.Command, args []string) {
 	valid, invalid = sgetct.CheckChain(ctx, lf, chain, ll, hc)
 	fmt.Printf("Found %d embedded SCTs for %q, of which %d were validated\n", (valid + invalid), domain, valid)
 	totalInvalid += invalid
+
+	// create download request
+	req, err := grab.NewRequest("", durl)
+	if err != nil {
+		panic(err)
+	}
+
+	// set request checksum
+	// TODO(philips): read from secure URL body
+	sum, err := hex.DecodeString("4e1e860029252e3d4b953161500eae538b295d52bc1760e90e17435415441c78")
+	if err != nil {
+		panic(err)
+	}
+	req.SetChecksum(sha256.New(), sum, true)
+
+	// download and validate file
+	resp := grab.DefaultClient.Do(req)
+	if err := resp.Err(); err != nil {
+		fmt.Printf("Failed to grab: %v", err)
+		os.Exit(1)
+	}
+
+	fmt.Println("Download saved to", resp.Filename)
 }
