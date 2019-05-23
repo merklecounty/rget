@@ -15,29 +15,39 @@
 package cmd
 
 import (
+	"context"
 	"fmt"
+	"net/http"
 	"os"
+	"time"
 
 	homedir "github.com/mitchellh/go-homedir"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
+
+	"github.com/google/certificate-transparency-go/ctutil"
+	"github.com/google/certificate-transparency-go/loglist"
+	"github.com/google/certificate-transparency-go/x509"
+	"github.com/google/certificate-transparency-go/x509util"
+
+	"github.com/philips/sget/sgetct"
 )
 
 var cfgFile string
 
 // rootCmd represents the base command when called without any subcommands
 var rootCmd = &cobra.Command{
-	Use:   "sget",
-	Short: "A brief description of your application",
-	Long: `A longer description that spans multiple lines and likely contains
-examples and usage of using your application. For example:
+	Use:   "sget [URL]",
+	Short: "Get a URL and verify the contents with CT Log backed transparency",
+	Long: `sget is similar to other popular URL fetchers with an additional layer of security.
+By using the Certificate Transparency Log infrastructure that enables third-party auditing of
+the web's certificate authority infrastructure sget can give you strong guarantees that the
+cryptographic hash digest of the binary you are downloading appears in a public log.
+`,
 
-Cobra is a CLI library for Go that empowers applications.
-This application is a tool to generate the needed files
-to quickly create a Cobra application.`,
-	// Uncomment the following line if your bare application
-	// has an action associated with it:
-	//	Run: func(cmd *cobra.Command, args []string) { },
+	Args: cobra.ExactArgs(1),
+
+	Run: get,
 }
 
 // Execute adds all child commands to the root command and sets flags appropriately.
@@ -86,4 +96,42 @@ func initConfig() {
 	if err := viper.ReadInConfig(); err == nil {
 		fmt.Println("Using config file:", viper.ConfigFileUsed())
 	}
+}
+
+func get(cmd *cobra.Command, args []string) {
+	var chain []*x509.Certificate
+	var valid, invalid int
+	var totalInvalid int
+
+	domain := args[0]
+
+	hc := &http.Client{Timeout: 30 * time.Second}
+	ctx := context.Background()
+	lf := ctutil.NewLogInfo
+
+	// TODO(philips): bump to ALlLogListURL and embed into this code instead of relying on Google
+	llData, err := x509util.ReadFileOrURL(loglist.LogListURL, hc)
+	if err != nil {
+		fmt.Printf("Failed to read log list: %v", err)
+		os.Exit(1)
+	}
+	ll, err := loglist.NewFromJSON(llData)
+	if err != nil {
+		fmt.Printf("Failed to parse log list: %v", err)
+		os.Exit(1)
+	}
+
+	// Get chain served online for TLS connection to site, and check any SCTs
+	// provided alongside on the connection along the way.
+	chain, valid, invalid, err = sgetct.GetAndCheckSiteChain(ctx, lf, domain, ll, hc)
+	if err != nil {
+		panic(fmt.Sprintf("%s: failed to get cert chain: %v", domain, err))
+	}
+	fmt.Printf("Found %d external SCTs for %q, of which %d were validated\n", (valid + invalid), domain, valid)
+	totalInvalid += invalid
+
+	// Check the chain for embedded SCTs.
+	valid, invalid = sgetct.CheckChain(ctx, lf, chain, ll, hc)
+	fmt.Printf("Found %d embedded SCTs for %q, of which %d were validated\n", (valid + invalid), domain, valid)
+	totalInvalid += invalid
 }
