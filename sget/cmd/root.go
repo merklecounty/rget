@@ -31,6 +31,7 @@ import (
 	"github.com/google/certificate-transparency-go/x509util"
 
 	"github.com/philips/sget/sgetct"
+	"github.com/philips/sget/sgetwellknown"
 )
 
 var cfgFile string
@@ -103,7 +104,15 @@ func get(cmd *cobra.Command, args []string) {
 	var valid, invalid int
 	var totalInvalid int
 
-	domain := args[0]
+	durl := args[0]
+
+	domain, err := sgetwellknown.Domain(durl)
+	if err != nil {
+		fmt.Printf("wellknown domain error: %v", err)
+		os.Exit(1)
+	}
+
+	cturl := "https://" + domain
 
 	hc := &http.Client{Timeout: 30 * time.Second}
 	ctx := context.Background()
@@ -123,11 +132,11 @@ func get(cmd *cobra.Command, args []string) {
 
 	// Get chain served online for TLS connection to site, and check any SCTs
 	// provided alongside on the connection along the way.
-	chain, valid, invalid, err = sgetct.GetAndCheckSiteChain(ctx, lf, domain, ll, hc)
+	chain, valid, invalid, err = sgetct.GetAndCheckSiteChain(ctx, lf, cturl, ll, hc)
 	if err != nil {
-		panic(fmt.Sprintf("%s: failed to get cert chain: %v", domain, err))
+		panic(fmt.Sprintf("%s: failed to get cert chain: %v", cturl, err))
 	}
-	fmt.Printf("Found %d external SCTs for %q, of which %d were validated\n", (valid + invalid), domain, valid)
+	fmt.Printf("Found %d external SCTs for %q, of which %d were validated\n", (valid + invalid), cturl, valid)
 	totalInvalid += invalid
 
 	// Check the chain for embedded SCTs.
