@@ -9,8 +9,10 @@ x Sha256sum generation from GitHub
 x Git log for sha files generated from Github
 x Webservice serving up sha files for wildcard domain from git
 x Request/issue Let's Encrypt certificate
-- Check CT log entry on crt.sh via a subcommand
-- Verify CT log entry in program via a subcommand
+x Check CT log entry on crt.sh via a subcommand
+x Verify CT log entry in program via a subcommand
+- Verify file URL SHA256Sum is in SHA256Sum returned by server
+- Verify SHA256Sum value matches domain merkle root
 
 ## MVP+1 - All file GH Release Test
 
@@ -29,3 +31,9 @@ Use: Prove that the scheme works for docker images as well
 - Index top NNN docker images and github repos into the service
 - Define roadmap for self-hosting
 - Define well-known URL for discovering domain for release discovery for a domain
+
+# Lessons Learned
+
+- Let's encrypt requires a CN that is shorter than 64 bytes. Thus 5c793eed08df469f8a40a0465f767677.secured.ifup.org
+- Github has multiple URLs for the same release tarball depending on API or website lookup
+- 
