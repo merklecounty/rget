@@ -11,16 +11,23 @@ x Webservice serving up sha files for wildcard domain from git
 x Request/issue Let's Encrypt certificate
 x Check CT log entry on crt.sh via a subcommand
 x Verify CT log entry in program via a subcommand
-- Verify file URL SHA256Sum is in SHA256Sum returned by server
-- Verify SHA256Sum value matches domain merkle root
+x Verify file URL SHA256Sum is in SHA256Sum returned by server
+x Verify SHA256Sum value matches domain merkle root
 
-## MVP+1 - All file GH Release Test
+## MVP+1 - Guess at SHA256Sum location
+
+Use: let publisher put the SHA256Sum somewhere and download it to guess at domain
+- Create subcommand to generate SHA256Sum for user to upload
+- Create URL guesser for SHA256Sum file
+- Generate CT URL based on the URL guess
+
+## MVP+2 - All file GH Release Test
 
 Use: Prove that the sha256sum can support all files for a given release
 
 - Introduce database to hold onto sha256sum info and index to org/project/release tuple
 
-## MVP+2 - All digests for a Docker image
+## MVP+3 - All digests for a Docker image
 
 Use: Prove that the scheme works for docker images as well
 
