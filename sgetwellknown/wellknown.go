@@ -20,12 +20,24 @@ type vcsPath struct {
 // and import paths referring to a fully-qualified importPath
 // containing a VCS type (foo.com/repo.git/dir)
 var vcsPaths = []*vcsPath{
-	// hack for MVP
+	// BEGIN HACKS
+	// BEGIN HACKS
+	// BEGIN HACKS
 	{
 		prefix: "api.github.com/repos/philips/releases-test/",
 		regexp: regexp.MustCompile(`^api\.(?P<root>github\.com)/repos/(?P<org>[A-Za-z0-9_.\-]+)/(?P<repo>[A-Za-z0-9_.\-]+)/(zipball|tarball)/(?P<tag>[A-Za-z0-9_.\-]+)$`),
 		domain: "5c793eed08df469f8a40a0465f767677.a73ecbf830829713e0037efd9b1a357e.secured.ifup.org",
 	},
+	{
+		prefix: "github.com/philips/releases-test/",
+		// https://github.com/philips/releases-test/archive/v2.0.zip
+		regexp: regexp.MustCompile(`^(?P<root>github\.com)/(?P<org>[A-Za-z0-9_.\-]+)/(?P<repo>[A-Za-z0-9_.\-]+)/archive/(?P<tag>[A-Za-z0-9_.\-]+)\.(zip|tar\.gz)$`),
+		domain: "5c793eed08df469f8a40a0465f767677.a73ecbf830829713e0037efd9b1a357e.secured.ifup.org",
+	},
+	// END HACKS
+	// END HACKS
+	// END HACKS
+
 	// Github API
 	{
 		prefix: "api.github.com/",
