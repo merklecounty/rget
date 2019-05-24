@@ -79,7 +79,7 @@ func GetAndCheckSiteChain(ctx context.Context, lf logInfoFactory, target string,
 		host += ":443"
 	}
 
-	fmt.Printf("Retrieve certificate chain from TLS connection to %q", host)
+	fmt.Printf("Retrieve certificate chain from TLS connection to %q\n", host)
 	dialer := net.Dialer{Timeout: hc.Timeout}
 	conn, err := tls.DialWithDialer(&dialer, "tcp", host, &tls.Config{InsecureSkipVerify: true})
 	if err != nil {
@@ -106,7 +106,7 @@ func GetAndCheckSiteChain(ctx context.Context, lf logInfoFactory, target string,
 	if len(scts) > 0 {
 		merkleLeaf, err := ct.MerkleTreeLeafFromChain(chain, ct.X509LogEntryType, 0 /* timestamp added later */)
 		if err != nil {
-			fmt.Printf("Failed to build Merkle tree leaf: %v", err)
+			fmt.Printf("Failed to build Merkle tree leaf: %v\n", err)
 			return chain, 0, len(scts), nil
 		}
 		for i, sctData := range scts {
