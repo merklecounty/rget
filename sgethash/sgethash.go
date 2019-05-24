@@ -25,7 +25,6 @@ type URLSum struct {
 type URLSumList []URLSum
 
 func FromSHA256SumFile(file string) URLSumList {
-
 	s := bufio.NewScanner(strings.NewReader(file))
 
 	list := URLSumList{}
