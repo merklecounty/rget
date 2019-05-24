@@ -14,10 +14,6 @@ import (
 	"github.com/philips/sget/sgethash"
 )
 
-func AddCommands(root *cobra.Command) {
-	root.AddCommand(publishReleaseCmd)
-}
-
 var publishReleaseCmd = &cobra.Command{
 	Use:   "publish-release",
 	Short: "Push a binary digests based on a previously created GitHub release",

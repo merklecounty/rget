@@ -16,6 +16,7 @@ package cmd
 
 import (
 	"github.com/spf13/cobra"
+	"github.com/spf13/viper"
 
 	"github.com/philips/sget/sget/github"
 )
@@ -33,13 +34,15 @@ func init() {
 	rootCmd.AddCommand(githubCmd)
 	github.AddCommands(githubCmd)
 
-	// Here you will define your flags and configuration settings.
+	githubCmd.PersistentFlags().String("foo", "", "A help for foo")
 
-	// Cobra supports Persistent Flags which will work for this command
-	// and all subcommands, e.g.:
-	// githubCmd.PersistentFlags().String("foo", "", "A help for foo")
+	githubCmd.PersistentFlags().StringP("owner", "o", "", "Repo owner name")
+	viper.BindPFlag("owner", githubCmd.PersistentFlags().Lookup("owner"))
 
-	// Cobra supports local flags which will only run when this command
-	// is called directly, e.g.:
-	// githubCmd.Flags().BoolP("toggle", "t", false, "Help message for toggle")
+	githubCmd.PersistentFlags().StringP("repo", "r", "", "Repo name")
+	viper.BindPFlag("repo", githubCmd.PersistentFlags().Lookup("repo"))
+
+	githubCmd.PersistentFlags().StringP("tag", "t", "", "Release tag")
+	viper.BindPFlag("tag", githubCmd.PersistentFlags().Lookup("tag"))
+
 }
