@@ -67,6 +67,16 @@ func (s URLSumList) Domain() string {
 	return fmt.Sprintf("%s.%s", hex.EncodeToString(root[:16]), hex.EncodeToString(root[16:]))
 }
 
+func (s URLSumList) GetURLSum(url string) *URLSum {
+	for _, u := range s {
+		if u.URL == url {
+			return &u
+		}
+	}
+
+	return nil
+}
+
 func (s URLSumList) MerkleRoot() []byte {
 	t := merkle.NewInMemoryMerkleTree(rfc6962.DefaultHasher)
 
