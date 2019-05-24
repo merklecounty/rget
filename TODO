@@ -17,7 +17,7 @@ x Verify SHA256Sum value matches domain merkle root
 ## MVP+1 - Guess at SHA256Sum location
 
 Use: let publisher put the SHA256Sum somewhere and download it to guess at domain
-- Create subcommand to generate SHA256Sum for user to upload
+x Create subcommand to generate SHA256Sum for user to upload
 - Create URL guesser for SHA256Sum file
 - Generate CT URL based on the URL guess
 
