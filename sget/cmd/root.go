@@ -21,6 +21,7 @@ import (
 	"io/ioutil"
 	"net/http"
 	"os"
+	"strings"
 	"time"
 
 	homedir "github.com/mitchellh/go-homedir"
@@ -164,6 +165,12 @@ func get(cmd *cobra.Command, args []string) {
 	}
 
 	sums := sgethash.FromSHA256SumFile(string(sha256file))
+
+	mprefix := "https://" + sums.Domain() + "."
+	if !strings.HasPrefix(cturl, mprefix) {
+		fmt.Printf("presented sha256sum file does not generate correct merkle root %s != %s\n", cturl, mprefix)
+		os.Exit(1)
+	}
 
 	urlSum := sums.GetURLSum(durl)
 	if urlSum == nil {

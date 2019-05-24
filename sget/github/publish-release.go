@@ -1,18 +1,4 @@
-// Copyright © 2019 NAME HERE <EMAIL ADDRESS>
-//
-// Licensed under the Apache License, Version 2.0 (the "License");
-// you may not use this file except in compliance with the License.
-// You may obtain a copy of the License at
-//
-//     http://www.apache.org/licenses/LICENSE-2.0
-//
-// Unless required by applicable law or agreed to in writing, software
-// distributed under the License is distributed on an "AS IS" BASIS,
-// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-// See the License for the specific language governing permissions and
-// limitations under the License.
-
-package cmd
+package github
 
 import (
 	"context"
@@ -28,33 +14,35 @@ import (
 	"github.com/philips/sget/sgethash"
 )
 
-// releaseGithubCmd represents the releaseGithub command
-var releaseGithubCmd = &cobra.Command{
-	Use:   "release-github",
+func AddCommands(root *cobra.Command) {
+	root.AddCommand(publishReleaseCmd)
+}
+
+var publishReleaseCmd = &cobra.Command{
+	Use:   "publish-release",
 	Short: "Push a binary digests based on a previously created GitHub release",
 	Long: `Use the GitHub API to download all assets related to a project
 release and push digests into the binary transparency log:
 `,
-	Run: releaseGithubMain,
+	Run: publishGithubMain,
 }
 
 func init() {
-	rootCmd.AddCommand(releaseGithubCmd)
 
-	releaseGithubCmd.Flags().StringP("owner", "o", "", "Repo owner name")
-	viper.BindPFlag("owner", releaseGithubCmd.Flags().Lookup("owner"))
+	publishReleaseCmd.Flags().StringP("owner", "o", "", "Repo owner name")
+	viper.BindPFlag("owner", publishReleaseCmd.Flags().Lookup("owner"))
 
-	releaseGithubCmd.Flags().StringP("repo", "r", "", "Repo name")
-	viper.BindPFlag("repo", releaseGithubCmd.Flags().Lookup("repo"))
+	publishReleaseCmd.Flags().StringP("repo", "r", "", "Repo name")
+	viper.BindPFlag("repo", publishReleaseCmd.Flags().Lookup("repo"))
 
-	releaseGithubCmd.Flags().StringP("tag", "t", "", "Release tag")
-	viper.BindPFlag("tag", releaseGithubCmd.Flags().Lookup("tag"))
+	publishReleaseCmd.Flags().StringP("tag", "t", "", "Release tag")
+	viper.BindPFlag("tag", publishReleaseCmd.Flags().Lookup("tag"))
 
-	releaseGithubCmd.Flags().BoolP("all-releases", "a", false, "Publish all releases")
-	viper.BindPFlag("all-releases", releaseGithubCmd.Flags().Lookup("all-releases"))
+	publishReleaseCmd.Flags().BoolP("all-releases", "a", false, "Publish all releases")
+	viper.BindPFlag("all-releases", publishReleaseCmd.Flags().Lookup("all-releases"))
 }
 
-func releaseGithubMain(cmd *cobra.Command, args []string) {
+func publishGithubMain(cmd *cobra.Command, args []string) {
 	var releases []github.RepositoryRelease
 
 	client := github.NewClient(nil)
