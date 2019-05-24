@@ -17,8 +17,8 @@ package cmd
 import (
 	"context"
 	"crypto/sha256"
-	"encoding/hex"
 	"fmt"
+	"io/ioutil"
 	"net/http"
 	"os"
 	"time"
@@ -34,6 +34,7 @@ import (
 	"github.com/google/certificate-transparency-go/x509util"
 
 	"github.com/philips/sget/sgetct"
+	"github.com/philips/sget/sgethash"
 	"github.com/philips/sget/sgetwellknown"
 )
 
@@ -147,19 +148,38 @@ func get(cmd *cobra.Command, args []string) {
 	fmt.Printf("Found %d embedded SCTs for %q, of which %d were validated\n", (valid + invalid), domain, valid)
 	totalInvalid += invalid
 
+	response, err := http.Get(cturl)
+	var sha256file []byte
+	if err != nil {
+		fmt.Printf("%s", err)
+		os.Exit(1)
+	} else {
+		var err error
+		defer response.Body.Close()
+		sha256file, err = ioutil.ReadAll(response.Body)
+		if err != nil {
+			fmt.Printf("%s", err)
+			os.Exit(1)
+		}
+	}
+
+	sums := sgethash.FromSHA256SumFile(string(sha256file))
+
+	urlSum := sums.GetURLSum(durl)
+	if urlSum == nil {
+		fmt.Printf("cannot find %s in %s list\n", durl, cturl)
+		os.Exit(1)
+	}
+
+	fmt.Printf("Expecting sha256sum %x for %s\n", urlSum.Sum, urlSum.URL)
+
 	// create download request
 	req, err := grab.NewRequest("", durl)
 	if err != nil {
 		panic(err)
 	}
 
-	// set request checksum
-	// TODO(philips): read from secure URL body
-	sum, err := hex.DecodeString("4e1e860029252e3d4b953161500eae538b295d52bc1760e90e17435415441c78")
-	if err != nil {
-		panic(err)
-	}
-	req.SetChecksum(sha256.New(), sum, true)
+	req.SetChecksum(sha256.New(), urlSum.Sum, true)
 
 	// download and validate file
 	resp := grab.DefaultClient.Do(req)
@@ -168,5 +188,5 @@ func get(cmd *cobra.Command, args []string) {
 		os.Exit(1)
 	}
 
-	fmt.Println("Download saved to", resp.Filename)
+	fmt.Println("Download validated and saved to", resp.Filename)
 }
