@@ -1,17 +1,38 @@
 ## Usage
 
-Run a server that will upload SHA files to a git repo for file backing
+Download a GitHub releases URL and verify it against the certificate transparency log.
 
 ```
-go run ./sget server https://github.com/philips/releases-test test
+sget https://api.github.com/repos/philips/releases-test/zipball/v2.0
+```
+
+```
+sget https://github.com/philips/releases-test/archive/v2.0.zip
+```
+
+## Developer Usage
+
+### GitHub Developer Usage
+
+Generate SHA256SUMS file for all files in a GitHub release
+
+```
+sget github generate-release-sums -o philips -r releases-test -t v2.0
 ```
 
 Download a release, generate the SHA file, and post it to the server
 
 ```
-go run ./sget release-github -t v1.0 -o philips -r releases-test
+sget github -t v1.0 -o philips -r releases-test
 ```
 
+## Administration Usage
+
+Run a server that will upload SHA files to a git repo for file backing
+
+```
+sget server https://github.com/philips/releases-test test
+```
 
 ## First time it worked!
 
