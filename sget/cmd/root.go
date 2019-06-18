@@ -18,6 +18,7 @@ import (
 	"context"
 	"crypto/sha256"
 	"fmt"
+	"io"
 	"io/ioutil"
 	"net/http"
 	"os"
@@ -172,26 +173,44 @@ func get(cmd *cobra.Command, args []string) {
 		os.Exit(1)
 	}
 
-	urlSum := sums.GetURLSum(durl)
-	if urlSum == nil {
-		fmt.Printf("cannot find %s in %s list\n", durl, cturl)
-		os.Exit(1)
-	}
-
-	fmt.Printf("Expecting sha256sum %x for %s\n", urlSum.Sum, urlSum.URL)
-
 	// create download request
 	req, err := grab.NewRequest("", durl)
 	if err != nil {
 		panic(err)
 	}
+	req.NoCreateDirectories = true
 
-	req.SetChecksum(sha256.New(), urlSum.Sum, true)
+	var fileSum []byte
+	req.AfterCopy = func(resp *grab.Response) (err error) {
+		var f *os.File
+		f, err = os.Open(resp.Filename)
+		if err != nil {
+			return
+		}
+		defer func() {
+			err = f.Close()
+		}()
+
+		h := sha256.New()
+		_, err = io.Copy(h, f)
+		if err != nil {
+			return err
+		}
+
+		fileSum = h.Sum(nil)
+		req.SetChecksum(sha256.New(), fileSum, true)
+		return
+	}
 
 	// download and validate file
 	resp := grab.DefaultClient.Do(req)
 	if err := resp.Err(); err != nil {
 		fmt.Printf("Failed to grab: %v", err)
+		os.Exit(1)
+	}
+
+	if !sums.SumExists(fileSum) {
+		fmt.Printf("cannot find %x in %v list\n", fileSum, cturl)
 		os.Exit(1)
 	}
 

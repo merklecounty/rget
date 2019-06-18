@@ -76,6 +76,16 @@ func (s URLSumList) GetURLSum(url string) *URLSum {
 	return nil
 }
 
+func (s URLSumList) SumExists(sum []byte) bool {
+	for _, u := range s {
+		if bytes.Compare(sum, u.Sum) == 0 {
+			return true
+		}
+	}
+
+	return false
+}
+
 func (s URLSumList) MerkleRoot() []byte {
 	t := merkle.NewInMemoryMerkleTree(rfc6962.DefaultHasher)
 
