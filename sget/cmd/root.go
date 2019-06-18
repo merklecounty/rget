@@ -180,7 +180,6 @@ func get(cmd *cobra.Command, args []string) {
 	}
 	req.NoCreateDirectories = true
 
-	var fileSum []byte
 	req.AfterCopy = func(resp *grab.Response) (err error) {
 		var f *os.File
 		f, err = os.Open(resp.Filename)
@@ -188,7 +187,7 @@ func get(cmd *cobra.Command, args []string) {
 			return
 		}
 		defer func() {
-			err = f.Close()
+			f.Close()
 		}()
 
 		h := sha256.New()
@@ -197,20 +196,30 @@ func get(cmd *cobra.Command, args []string) {
 			return err
 		}
 
-		fileSum = h.Sum(nil)
+		fileSum := h.Sum(nil)
+
+		if !sums.SumExists(fileSum) {
+			mmErr := fmt.Errorf("cannot find %x in %v list", fileSum, cturl)
+
+			if err := os.Remove(resp.Filename); err != nil {
+				// err should be os.PathError and include file path
+				return fmt.Errorf(
+					"cannot remove downloaded file with checksum mismatch: %v",
+					mmErr)
+			}
+
+			return mmErr
+		}
+
 		req.SetChecksum(sha256.New(), fileSum, true)
+
 		return
 	}
 
 	// download and validate file
 	resp := grab.DefaultClient.Do(req)
 	if err := resp.Err(); err != nil {
-		fmt.Printf("Failed to grab: %v", err)
-		os.Exit(1)
-	}
-
-	if !sums.SumExists(fileSum) {
-		fmt.Printf("cannot find %x in %v list\n", fileSum, cturl)
+		fmt.Printf("Failed to grab: %v\n", err)
 		os.Exit(1)
 	}
 
