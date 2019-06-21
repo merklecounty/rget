@@ -9,6 +9,8 @@ github.com/emirpasic/gods/lists/arraylist
 github.com/emirpasic/gods/trees
 github.com/emirpasic/gods/utils
 github.com/emirpasic/gods/lists
+# github.com/fatih/color v1.7.0
+github.com/fatih/color
 # github.com/fsnotify/fsnotify v1.4.7
 github.com/fsnotify/fsnotify
 # github.com/gogo/protobuf v1.2.1
@@ -104,6 +106,10 @@ github.com/libp2p/go-libp2p-peer
 github.com/libp2p/go-libp2p-protocol
 # github.com/magiconair/properties v1.8.0
 github.com/magiconair/properties
+# github.com/mattn/go-colorable v0.1.2
+github.com/mattn/go-colorable
+# github.com/mattn/go-isatty v0.0.8
+github.com/mattn/go-isatty
 # github.com/minio/blake2b-simd v0.0.0-20160723061019-3f5f724cb5b1
 github.com/minio/blake2b-simd
 # github.com/minio/sha256-simd v0.0.0-20190317211740-0d7ea3c244ee
@@ -122,12 +128,21 @@ github.com/multiformats/go-multiaddr-dns
 github.com/multiformats/go-multiaddr-net
 # github.com/multiformats/go-multihash v0.0.1
 github.com/multiformats/go-multihash
+# github.com/nmrshll/oauth2-noserver v0.0.0-20190221200101-9bf017bef639
+github.com/nmrshll/oauth2-noserver
+# github.com/nmrshll/rndm-go v0.0.0-20170430161430-8da3024e53de
+github.com/nmrshll/rndm-go
+# github.com/palantir/stacktrace v0.0.0-20161112013806-78658fd2d177
+github.com/palantir/stacktrace
+github.com/palantir/stacktrace/cleanpath
 # github.com/pelletier/go-buffruneio v0.2.0
 github.com/pelletier/go-buffruneio
 # github.com/pelletier/go-toml v1.2.0
 github.com/pelletier/go-toml
 # github.com/sergi/go-diff v1.0.0
 github.com/sergi/go-diff/diffmatchpatch
+# github.com/skratchdot/open-golang v0.0.0-20190402232053-79abb63cd66e
+github.com/skratchdot/open-golang/open
 # github.com/spf13/afero v1.1.2
 github.com/spf13/afero
 github.com/spf13/afero/mem
@@ -187,6 +202,9 @@ golang.org/x/net/http2
 golang.org/x/net/http2/hpack
 golang.org/x/net/http/httpguts
 golang.org/x/net/idna
+# golang.org/x/oauth2 v0.0.0-20190604053449-0f29369cfe45
+golang.org/x/oauth2
+golang.org/x/oauth2/internal
 # golang.org/x/sys v0.0.0-20190316082340-a2f829d7f35f
 golang.org/x/sys/unix
 golang.org/x/sys/windows
@@ -196,6 +214,14 @@ golang.org/x/text/transform
 golang.org/x/text/unicode/norm
 golang.org/x/text/secure/bidirule
 golang.org/x/text/unicode/bidi
+# google.golang.org/appengine v1.4.0
+google.golang.org/appengine/urlfetch
+google.golang.org/appengine/internal
+google.golang.org/appengine/internal/urlfetch
+google.golang.org/appengine/internal/base
+google.golang.org/appengine/internal/datastore
+google.golang.org/appengine/internal/log
+google.golang.org/appengine/internal/remote_api
 # google.golang.org/genproto v0.0.0-20190307195333-5fe7a883aa19
 google.golang.org/genproto/googleapis/rpc/status
 google.golang.org/genproto/googleapis/api/annotations
