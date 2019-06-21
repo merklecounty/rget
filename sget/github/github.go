@@ -5,4 +5,5 @@ import "github.com/spf13/cobra"
 func AddCommands(root *cobra.Command) {
 	root.AddCommand(publishReleaseCmd)
 	root.AddCommand(generateReleaseSumsCmd)
+	root.AddCommand(publishReleaseSumsCmd)
 }

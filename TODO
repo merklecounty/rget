@@ -43,4 +43,8 @@ Use: Prove that the scheme works for docker images as well
 
 - Let's encrypt requires a CN that is shorter than 64 bytes. Thus 5c793eed08df469f8a40a0465f767677.secured.ifup.org
 - Github has multiple URLs for the same release tarball depending on API or website lookup
-- 
+
+
+# Nice to have
+
+- Save OAUTH token for github into a config file
