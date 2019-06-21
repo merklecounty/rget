@@ -20,6 +20,7 @@ Use: let publisher put the SHA256Sum somewhere and download it to guess at domai
 x Create subcommand to generate SHA256Sum for user to upload
 - Create URL guesser for SHA256Sum file
 - Generate CT URL based on the URL guess
+- Ensure embedded SCT check also checks CN
 
 ## MVP+2 - All file GH Release Test
 
