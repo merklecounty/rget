@@ -3,6 +3,7 @@ package sgetwellknown
 import (
 	"errors"
 	"fmt"
+	"path"
 	"regexp"
 	"strings"
 )
@@ -10,9 +11,10 @@ import (
 // A vcsPath describes how to convert an import path into a
 // version control system and repository name.
 type vcsPath struct {
-	prefix string         // prefix this description applies to
-	regexp *regexp.Regexp // compiled pattern for import path
-	domain string         // domain that will be used for the URL for the CT Log
+	prefix    string         // prefix this description applies to
+	regexp    *regexp.Regexp // compiled pattern for import path
+	domain    string         // domain that will be used for the URL for the CT Log
+	sumPrefix string         // URL prefix for a SUMS file
 }
 
 // vcsPaths defines the meaning of import paths referring to
@@ -24,15 +26,17 @@ var vcsPaths = []*vcsPath{
 	// BEGIN HACKS
 	// BEGIN HACKS
 	{
-		prefix: "api.github.com/repos/philips/releases-test/",
-		regexp: regexp.MustCompile(`^api\.(?P<root>github\.com)/repos/(?P<org>[A-Za-z0-9_.\-]+)/(?P<repo>[A-Za-z0-9_.\-]+)/(zipball|tarball)/(?P<tag>[A-Za-z0-9_.\-]+)$`),
-		domain: "5c793eed08df469f8a40a0465f767677.a73ecbf830829713e0037efd9b1a357e.secured.ifup.org",
+		prefix:    "api.github.com/repos/philips/releases-test/",
+		regexp:    regexp.MustCompile(`^api\.(?P<root>github\.com)/repos/(?P<org>[A-Za-z0-9_.\-]+)/(?P<repo>[A-Za-z0-9_.\-]+)/(zipball|tarball)/(?P<tag>[A-Za-z0-9_.\-]+)$`),
+		domain:    "5c793eed08df469f8a40a0465f767677.a73ecbf830829713e0037efd9b1a357e.secured.ifup.org",
+		sumPrefix: "https://github.com/{org}/{repo}/releases/download/{tag}/",
 	},
 	{
 		prefix: "github.com/philips/releases-test/",
 		// https://github.com/philips/releases-test/archive/v2.0.zip
-		regexp: regexp.MustCompile(`^(?P<root>github\.com)/(?P<org>[A-Za-z0-9_.\-]+)/(?P<repo>[A-Za-z0-9_.\-]+)/archive/(?P<tag>[A-Za-z0-9_.\-]+)\.(zip|tar\.gz)$`),
-		domain: "5c793eed08df469f8a40a0465f767677.a73ecbf830829713e0037efd9b1a357e.secured.ifup.org",
+		regexp:    regexp.MustCompile(`^(?P<root>github\.com)/(?P<org>[A-Za-z0-9_.\-]+)/(?P<repo>[A-Za-z0-9_.\-]+)/archive/(?P<tag>[A-Za-z0-9_.\-]+)\.(zip|tar\.gz)$`),
+		domain:    "5c793eed08df469f8a40a0465f767677.a73ecbf830829713e0037efd9b1a357e.secured.ifup.org",
+		sumPrefix: "https://github.com/{org}/{repo}/releases/download/{tag}/",
 	},
 	// END HACKS
 	// END HACKS
@@ -42,15 +46,17 @@ var vcsPaths = []*vcsPath{
 	{
 		prefix: "api.github.com/",
 		// https://api.github.com/repos/philips/releases-test/zipball/v2.0
-		regexp: regexp.MustCompile(`^api\.(?P<root>github\.com)/repos/(?P<org>[A-Za-z0-9_.\-]+)/(?P<repo>[A-Za-z0-9_.\-]+)/(zipball|tarball)/(?P<tag>[A-Za-z0-9_.\-]+)$`),
-		domain: "{tag}.{repo}.{org}.{root}",
+		regexp:    regexp.MustCompile(`^api\.(?P<root>github\.com)/repos/(?P<org>[A-Za-z0-9_.\-]+)/(?P<repo>[A-Za-z0-9_.\-]+)/(zipball|tarball)/(?P<tag>[A-Za-z0-9_.\-]+)$`),
+		domain:    "{tag}.{repo}.{org}.{root}.secured.ifup.org",
+		sumPrefix: "https://github.com/{org}/{repo}/releases/download/{tag}/",
 	},
 	// Github
 	{
 		prefix: "github.com/",
 		// https://github.com/philips/releases-test/archive/v2.0.zip
-		regexp: regexp.MustCompile(`^(?P<root>github\.com)/(?P<org>[A-Za-z0-9_.\-]+)/(?P<repo>[A-Za-z0-9_.\-]+)/archive/(?P<tag>[A-Za-z0-9_.\-]+)\.(zip|tar\.gz)$`),
-		domain: "{tag}.{repo}.{org}.{root}",
+		regexp:    regexp.MustCompile(`^(?P<root>github\.com)/(?P<org>[A-Za-z0-9_.\-]+)/(?P<repo>[A-Za-z0-9_.\-]+)/archive/(?P<tag>[A-Za-z0-9_.\-]+)\.(zip|tar\.gz)$`),
+		domain:    "{tag}.{repo}.{org}.{root}.secured.ifup.org",
+		sumPrefix: "https://github.com/{org}/{repo}/releases/download/{tag}/",
 	},
 }
 
@@ -59,7 +65,19 @@ var vcsPaths = []*vcsPath{
 // TODO(philips): define a well-known URL format to do this
 // TODO(philips): handle docker URLs
 func Domain(target string) (string, error) {
-	return domainFromURL(target, vcsPaths)
+	match, err := matchesFromURL(target, vcsPaths)
+	if err != nil {
+		return "", err
+	}
+	return match["domain"], nil
+}
+
+func SumPrefix(target string) (string, error) {
+	match, err := matchesFromURL(target, vcsPaths)
+	if err != nil {
+		return "", err
+	}
+	return match["sumPrefix"], nil
 }
 
 var errUnknownSite = errors.New("no domain translation logic for this URL")
@@ -78,7 +96,7 @@ func expand(match map[string]string, s string) string {
 
 // domainFromURL takes a target download URL and builds a domain scheme that can be
 // prepended with a merkle root to resolve to a certificate
-func domainFromURL(downloadURL string, vcsPaths []*vcsPath) (string, error) {
+func matchesFromURL(downloadURL string, vcsPaths []*vcsPath) (map[string]string, error) {
 	downloadPath := strings.TrimPrefix(downloadURL, "https://")
 
 	for _, srv := range vcsPaths {
@@ -88,7 +106,7 @@ func domainFromURL(downloadURL string, vcsPaths []*vcsPath) (string, error) {
 		m := srv.regexp.FindStringSubmatch(downloadPath)
 		if m == nil {
 			if srv.prefix != "" {
-				return "", fmt.Errorf("invalid %s domain path %q", srv.prefix, downloadPath)
+				return nil, fmt.Errorf("invalid %s domain path %q", srv.prefix, downloadPath)
 			}
 			continue
 		}
@@ -105,7 +123,13 @@ func domainFromURL(downloadURL string, vcsPaths []*vcsPath) (string, error) {
 		if srv.domain != "" {
 			match["domain"] = expand(match, srv.domain)
 		}
-		return match["domain"], nil
+		if srv.sumPrefix != "" {
+			match["sumPrefix"] = expand(match, srv.sumPrefix)
+		} else {
+			// default to the directory of the file
+			match["sumPrefix"] = path.Dir(downloadPath)
+		}
+		return match, nil
 	}
-	return "", errUnknownSite
+	return nil, errUnknownSite
 }
