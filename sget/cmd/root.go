@@ -22,7 +22,6 @@ import (
 	"io/ioutil"
 	"net/http"
 	"os"
-	"strings"
 	"time"
 
 	homedir "github.com/mitchellh/go-homedir"
@@ -112,19 +111,40 @@ func get(cmd *cobra.Command, args []string) {
 
 	durl := args[0]
 
+	// Step 1: Download the SHA256SUMS that is correct for the URL
+	prefix, err := sgetwellknown.SumPrefix(durl)
+	sumsURL := prefix + "SHA256SUMS"
+	fmt.Printf("Downloading sums file: %v\n", sumsURL)
+	response, err := http.Get(sumsURL)
+	var sha256file []byte
+	if err != nil {
+		fmt.Printf("%s", err)
+		os.Exit(1)
+	} else {
+		var err error
+		defer response.Body.Close()
+		sha256file, err = ioutil.ReadAll(response.Body)
+		if err != nil {
+			fmt.Printf("%s", err)
+			os.Exit(1)
+		}
+	}
+
+	// Step 2. Generate the CT URL from the SHA256SUMS file
 	domain, err := sgetwellknown.Domain(durl)
 	if err != nil {
 		fmt.Printf("wellknown domain error: %v", err)
 		os.Exit(1)
 	}
 
-	cturl := "https://" + domain
+	sums := sgethash.FromSHA256SumFile(string(sha256file))
+	cturl := "https://" + sums.Domain() + "." + domain
 
 	hc := &http.Client{Timeout: 30 * time.Second}
 	ctx := context.Background()
 	lf := ctutil.NewLogInfo
 
-	// TODO(philips): bump to ALlLogListURL and embed into this code instead of relying on Google
+	// TODO(philips): bump to AllLogListURL and embed into this code instead of relying on Google
 	llData, err := x509util.ReadFileOrURL(loglist.LogListURL, hc)
 	if err != nil {
 		fmt.Printf("Failed to read log list: %v", err)
@@ -149,29 +169,6 @@ func get(cmd *cobra.Command, args []string) {
 	valid, invalid = sgetct.CheckChain(ctx, lf, chain, ll, hc)
 	fmt.Printf("Found %d embedded SCTs for %q, of which %d were validated\n", (valid + invalid), domain, valid)
 	totalInvalid += invalid
-
-	response, err := http.Get(cturl)
-	var sha256file []byte
-	if err != nil {
-		fmt.Printf("%s", err)
-		os.Exit(1)
-	} else {
-		var err error
-		defer response.Body.Close()
-		sha256file, err = ioutil.ReadAll(response.Body)
-		if err != nil {
-			fmt.Printf("%s", err)
-			os.Exit(1)
-		}
-	}
-
-	sums := sgethash.FromSHA256SumFile(string(sha256file))
-
-	mprefix := "https://" + sums.Domain() + "."
-	if !strings.HasPrefix(cturl, mprefix) {
-		fmt.Printf("presented sha256sum file does not generate correct merkle root %s != %s\n", cturl, mprefix)
-		os.Exit(1)
-	}
 
 	// create download request
 	req, err := grab.NewRequest("", durl)
