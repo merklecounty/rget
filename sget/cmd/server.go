@@ -29,7 +29,6 @@ import (
 	"gopkg.in/src-d/go-git.v4"
 	"gopkg.in/src-d/go-git.v4/plumbing/object"
 	githttp "gopkg.in/src-d/go-git.v4/plumbing/transport/http"
-	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
 	"github.com/philips/sget/sgethash"
 )
@@ -52,6 +51,8 @@ to quickly create a Cobra application.`,
 func init() {
 	rootCmd.AddCommand(serverCmd)
 
+	serverCmd.PersistentFlags().String("kubeconfig", "", "kubeconfig")
+	viper.BindFlag("kubeconfig", githubCmd.PersistentFlags().Lookup("kubeconfig"))
 }
 
 // TODO(philips: terrible hack
@@ -113,34 +114,6 @@ func (r repo) handler(resp http.ResponseWriter, req *http.Request) {
 
 	sums := sgethash.FromSHA256SumFile(string(sha256file))
 	ctdomain := sums.Domain() + "." + domain
-
-	cert := v1alpha1.Certificate{
-		APIVersion: "certmanager.k8s.io/v1alpha1",
-		Kind:       v1alpha1.CertificateKind,
-		Spec: v1alpha1.CertificateSpec{
-			CommonName: l.ShortDomain() + ".secured.ifup.org",
-			SecretName: l.ShortDomain(),
-			IssuerRef: v1alpha1.ObjectReference{
-				Name: "letsencrypt-prod",
-			},
-			DNSNames: []string{
-				ctdomain,
-			},
-		},
-		ACME: []v1alpha1.ACMECertificateConfig{
-			Config: []v1alpha1.DomainSolverConfig{
-				{
-					HTTP01: v1alpha1.HTTP01SolverConfig{
-						Ingress: "sserve-ingress",
-					},
-					Domains: []string{
-						l.ShortDomain() + ".secured.ifup.org",
-						ctdomain,
-					},
-				},
-			},
-		},
-	}
 
 	w, err := r.repo.Worktree()
 	if err != nil {
