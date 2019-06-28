@@ -24,10 +24,12 @@ import (
 	"path/filepath"
 	"time"
 
+	"github.com/jetstack/cert-manager/pkg/apis/certmanager/v1alpha1"
 	"github.com/spf13/cobra"
 	"gopkg.in/src-d/go-git.v4"
 	"gopkg.in/src-d/go-git.v4/plumbing/object"
 	githttp "gopkg.in/src-d/go-git.v4/plumbing/transport/http"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
 	"github.com/philips/sget/sgethash"
 )
@@ -66,23 +68,31 @@ func (r repo) handler(resp http.ResponseWriter, req *http.Request) {
 		return
 	}
 
-	m, err := req.MultipartReader()
+	// TODO: get a URL field from the POST
+	var sumsURL string
+	panic("no sumsURL wired up")
+
+	// TODO(philips): how do we ensure we don't DDoS these URLs?
+
+	// Step 1: Download the SHA256SUMS that is correct for the URL
+	response, err := http.Get(sumsURL)
+	var sha256file []byte
 	if err != nil {
-		panic(err)
+		fmt.Printf("%s", err)
+		os.Exit(1)
+	} else {
+		var err error
+		defer response.Body.Close()
+		sha256file, err = ioutil.ReadAll(response.Body)
+		if err != nil {
+			fmt.Printf("%s", err)
+			os.Exit(1)
+		}
 	}
 
-	p, err := m.NextPart()
-	if err != nil {
-		panic(err)
-	}
+	l := sgethash.FromSHA256SumFile(string(sha256file))
 
-	body, err := ioutil.ReadAll(p)
-	if err != nil {
-		panic(err)
-	}
-
-	l := sgethash.FromSHA256SumFile(string(body))
-
+	// Step 2: Save the file contents to the git repo by domain
 	domain := l.Domain()
 	filename := filepath.Join(directory, domain)
 	if _, err := os.Stat(filename); !os.IsNotExist(err) {
@@ -92,6 +102,44 @@ func (r repo) handler(resp http.ResponseWriter, req *http.Request) {
 	err = ioutil.WriteFile(filename, body, 0644)
 	if err != nil {
 		panic(err)
+	}
+
+	// Step 3. Create the Certificate object for the domain and save that as well
+	domain, err = sgetwellknown.Domain(sumsURL)
+	if err != nil {
+		fmt.Printf("wellknown domain error: %v", err)
+		os.Exit(1)
+	}
+
+	sums := sgethash.FromSHA256SumFile(string(sha256file))
+	ctdomain := sums.Domain() + "." + domain
+
+	cert := v1alpha1.Certificate{
+		APIVersion: "certmanager.k8s.io/v1alpha1",
+		Kind:       v1alpha1.CertificateKind,
+		Spec: v1alpha1.CertificateSpec{
+			CommonName: l.ShortDomain() + ".secured.ifup.org",
+			SecretName: l.ShortDomain(),
+			IssuerRef: v1alpha1.ObjectReference{
+				Name: "letsencrypt-prod",
+			},
+			DNSNames: []string{
+				ctdomain,
+			},
+		},
+		ACME: []v1alpha1.ACMECertificateConfig{
+			Config: []v1alpha1.DomainSolverConfig{
+				{
+					HTTP01: v1alpha1.HTTP01SolverConfig{
+						Ingress: "sserve-ingress",
+					},
+					Domains: []string{
+						l.ShortDomain() + ".secured.ifup.org",
+						ctdomain,
+					},
+				},
+			},
+		},
 	}
 
 	w, err := r.repo.Worktree()
@@ -141,6 +189,7 @@ func (r repo) handler(resp http.ResponseWriter, req *http.Request) {
 	if err != nil {
 		panic(err)
 	}
+
 }
 
 func server() {
