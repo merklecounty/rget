@@ -31,13 +31,9 @@ import (
 // serverCmd represents the server command
 var serverCmd = &cobra.Command{
 	Use:   "server",
-	Short: "A brief description of your command",
-	Long: `A longer description that spans multiple lines and likely contains examples
-and usage of using your command. For example:
-
-Cobra is a CLI library for Go that empowers applications.
-This application is a tool to generate the needed files
-to quickly create a Cobra application.`,
+	Short: "sget API server and TLS server",
+	Long: `Provides an HTTP and HTTPS server that saves into two different
+git repos one with TLS secrets and one with public data that can be audited.`,
 	Run: server,
 }
 
@@ -114,14 +110,19 @@ func (r sumRepo) handler(resp http.ResponseWriter, req *http.Request) {
 }
 
 func server(cmd *cobra.Command, args []string) {
-	url := args[0]
-	dir := args[1]
+	pubgit := args[0]
+	privgit := args[1]
 
-	gc, err := gitcache.NewGitCache(url, dir)
+	pubgc, err := gitcache.NewGitCache(pubgit, "public")
+	if err != nil {
+		panic(err)
+	}
+	http.HandleFunc("/", sumRepo(*pubgc).handler)
+
+	_, err = gitcache.NewGitCache(privgit, "private")
 	if err != nil {
 		panic(err)
 	}
 
-	http.HandleFunc("/", sumRepo(*gc).handler)
 	log.Fatal(http.ListenAndServe(":5001", nil))
 }
