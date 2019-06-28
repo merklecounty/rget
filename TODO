@@ -14,6 +14,14 @@ x Verify CT log entry in program via a subcommand
 x Verify file URL SHA256Sum is in SHA256Sum returned by server
 x Verify SHA256Sum value matches domain merkle root
 
+## MVP+0.5 - Generate certificates
+x Create container for sget serve
+- Use autocert to create API endpoint certificate
+- Add flag to submit to a different URL and add a default
+- Create Kubernetes manifests for sget serve
+- Get sget serve running on Kubernetes cluster behind secure.ifup.org load balancer
+- Use autocert to create certificates for first few sum files
+
 ## MVP+1 - Guess at SHA256Sum location
 
 Use: let publisher put the SHA256Sum somewhere and download it to guess at domain
@@ -22,7 +30,12 @@ x Create subcommand to generate SHA256Sum for user to upload
 - Generate CT URL based on the URL guess
 - Ensure embedded SCT check also checks CN
 
-## MVP+2 - All file GH Release Test
+# Public Release
+- Take github credentials via environment variables
+- Define roadmap for self-hosting
+- Define well-known URL for discovering domain for release discovery for a domain
+
+## PR+1 - All file GH Release Test
 
 Use: Prove that the sha256sum can support all files for a given release
 
@@ -32,13 +45,9 @@ Use: Prove that the sha256sum can support all files for a given release
 
 Use: Prove that the scheme works for docker images as well
 
-# Public Release
 
 ## Public Release
-
 - Index top NNN docker images and github repos into the service
-- Define roadmap for self-hosting
-- Define well-known URL for discovering domain for release discovery for a domain
 
 # Lessons Learned
 
