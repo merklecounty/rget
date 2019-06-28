@@ -15,21 +15,16 @@
 package cmd
 
 import (
+	"context"
 	"fmt"
-	"io"
 	"io/ioutil"
 	"log"
 	"net/http"
 	"os"
-	"path/filepath"
-	"time"
 
-	"github.com/jetstack/cert-manager/pkg/apis/certmanager/v1alpha1"
 	"github.com/spf13/cobra"
-	"gopkg.in/src-d/go-git.v4"
-	"gopkg.in/src-d/go-git.v4/plumbing/object"
-	githttp "gopkg.in/src-d/go-git.v4/plumbing/transport/http"
 
+	"github.com/philips/sget/gitcache"
 	"github.com/philips/sget/sgethash"
 )
 
@@ -43,37 +38,29 @@ and usage of using your command. For example:
 Cobra is a CLI library for Go that empowers applications.
 This application is a tool to generate the needed files
 to quickly create a Cobra application.`,
-	Run: func(cmd *cobra.Command, args []string) {
-		server()
-	},
+	Run: server,
 }
 
 func init() {
 	rootCmd.AddCommand(serverCmd)
-
-	serverCmd.PersistentFlags().String("kubeconfig", "", "kubeconfig")
-	viper.BindFlag("kubeconfig", githubCmd.PersistentFlags().Lookup("kubeconfig"))
 }
 
-// TODO(philips: terrible hack
-var directory string
+type sumRepo gitcache.GitCache
 
-type repo struct {
-	directory string
-	repo      git.Repository
-}
-
-func (r repo) handler(resp http.ResponseWriter, req *http.Request) {
+func (r sumRepo) handler(resp http.ResponseWriter, req *http.Request) {
 	if req.Method != "POST" {
-		io.WriteString(resp, "Only POST is supported!")
+		http.Error(resp, "Only POST is supported", http.StatusBadRequest)
 		return
 	}
 
-	// TODO: get a URL field from the POST
-	var sumsURL string
-	panic("no sumsURL wired up")
+	err := req.ParseForm()
+	if err != nil {
+		http.Error(resp, "Invalid request", http.StatusBadRequest)
+		return
+	}
 
-	// TODO(philips): how do we ensure we don't DDoS these URLs?
+	sumsURL := req.Form.Get("url")
+	fmt.Printf("submission: %v\n", sumsURL)
 
 	// Step 1: Download the SHA256SUMS that is correct for the URL
 	response, err := http.Get(sumsURL)
@@ -95,120 +82,46 @@ func (r repo) handler(resp http.ResponseWriter, req *http.Request) {
 
 	// Step 2: Save the file contents to the git repo by domain
 	domain := l.Domain()
-	filename := filepath.Join(directory, domain)
-	if _, err := os.Stat(filename); !os.IsNotExist(err) {
-		return // already have this file
-	}
+	gc := gitcache.GitCache(r)
 
-	err = ioutil.WriteFile(filename, body, 0644)
-	if err != nil {
-		panic(err)
+	_, err = gc.Get(context.Background(), domain)
+	if err == nil {
+		// TODO(philips): add rate limiting and DDoS protections here
+		fmt.Printf("cache hit: %v\n", sumsURL)
+		resp.WriteHeader(http.StatusOK)
+		return
 	}
-
-	// Step 3. Create the Certificate object for the domain and save that as well
-	domain, err = sgetwellknown.Domain(sumsURL)
+	err = gc.Put(context.Background(), domain, sha256file)
 	if err != nil {
-		fmt.Printf("wellknown domain error: %v", err)
+		fmt.Printf("git put error: %v", err)
 		os.Exit(1)
 	}
 
-	sums := sgethash.FromSHA256SumFile(string(sha256file))
-	ctdomain := sums.Domain() + "." + domain
+	/*
+		// Step 3. Create the Certificate object for the domain and save that as well
+		domain, err = sgetwellknown.Domain(sumsURL)
+		if err != nil {
+			fmt.Printf("wellknown domain error: %v", err)
+			os.Exit(1)
+		}
 
-	w, err := r.repo.Worktree()
-	if err != nil {
-		panic(err)
-	}
+		sums := sgethash.FromSHA256SumFile(string(sha256file))
+		ctdomain := sums.Domain() + "." + domain
+	*/
 
-	_, err = w.Add(domain)
-	if err != nil {
-		panic(err)
-	}
-
-	status, err := w.Status()
-	if err != nil {
-		panic(err)
-	}
-
-	// Commits the current staging are to the repository, with the new file
-	// just created. We should provide the object.Signature of Author of the
-	// commit.
-	co, err := w.Commit(fmt.Sprintf("add: %v", domain), &git.CommitOptions{
-		Author: &object.Signature{
-			Name:  "sget bot",
-			Email: "sget@ifup.org",
-			When:  time.Now(),
-		},
-	})
-
-	fmt.Println(status)
-	obj, err := r.repo.CommitObject(co)
-	if err != nil {
-		panic(err)
-	}
-
-	fmt.Println(obj)
-
-	auth := &githttp.BasicAuth{
-		Username: "philips",
-		Password: "00f9a4bab7616d0a6b4e1feea76eade10cfc7739",
-	}
-
-	fmt.Printf("git push\n")
-	// push using default options
-	err = r.repo.Push(&git.PushOptions{
-		Auth: auth,
-	})
-	if err != nil {
-		panic(err)
-	}
-
+	resp.WriteHeader(http.StatusOK)
+	return
 }
 
-func server() {
-	url := os.Args[2]
-	directory = os.Args[3]
+func server(cmd *cobra.Command, args []string) {
+	url := args[0]
+	dir := args[1]
 
-	repo := repo{
-		directory: directory,
-	}
-
-	if _, err := os.Stat(directory); os.IsNotExist(err) {
-		fmt.Printf("git clone %s %s --recursive\n", url, directory)
-		r, err := git.PlainClone(directory, false, &git.CloneOptions{
-			URL:               url,
-			RecurseSubmodules: git.DefaultSubmoduleRecursionDepth,
-		})
-		if err != nil {
-			panic(err)
-		}
-
-		repo.repo = *r
-	} else {
-		r, err := git.PlainOpen(directory)
-		if err != nil {
-			panic(err)
-		}
-		repo.repo = *r
-
-		w, err := r.Worktree()
-		if err != nil {
-			panic(err)
-		}
-
-		err = w.Pull(&git.PullOptions{RemoteName: "origin"})
-	}
-
-	ref, err := repo.repo.Head()
+	gc, err := gitcache.NewGitCache(url, dir)
 	if err != nil {
 		panic(err)
 	}
 
-	_, err = repo.repo.CommitObject(ref.Hash())
-	if err != nil {
-		panic(err)
-	}
-
-	http.HandleFunc("/", repo.handler)
+	http.HandleFunc("/", sumRepo(*gc).handler)
 	log.Fatal(http.ListenAndServe(":5001", nil))
 }
