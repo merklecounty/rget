@@ -22,9 +22,15 @@ func NewGitCache(url, dir string) (*GitCache, error) {
 		dir: autocert.DirCache(dir),
 	}
 
+	auth := &githttp.BasicAuth{
+		Username: "philips",
+		Password: "00f9a4bab7616d0a6b4e1feea76eade10cfc7739",
+	}
+
 	if _, err := os.Stat(dir); os.IsNotExist(err) {
 		fmt.Printf("git clone %s %s --recursive\n", url, dir)
 		r, err := git.PlainClone(dir, false, &git.CloneOptions{
+			Auth:              auth,
 			URL:               url,
 			RecurseSubmodules: git.DefaultSubmoduleRecursionDepth,
 		})
