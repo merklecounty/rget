@@ -66,6 +66,11 @@ func (s URLSumList) Domain() string {
 	return fmt.Sprintf("%s.%s", hex.EncodeToString(root[:16]), hex.EncodeToString(root[16:]))
 }
 
+func (s URLSumList) ShortDomain() string {
+	root := s.MerkleRoot()
+	return fmt.Sprintf("%s", hex.EncodeToString(root[:16]))
+}
+
 func (s URLSumList) GetURLSum(url string) *URLSum {
 	for _, u := range s {
 		if u.URL == url {
