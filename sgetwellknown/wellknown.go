@@ -2,7 +2,6 @@ package sgetwellknown
 
 import (
 	"errors"
-	"fmt"
 	"path"
 	"regexp"
 	"strings"
@@ -27,15 +26,24 @@ var vcsPaths = []*vcsPath{
 		prefix: "api.github.com/",
 		// https://api.github.com/repos/philips/releases-test/zipball/v2.0
 		regexp:    regexp.MustCompile(`^api\.(?P<root>github\.com)/repos/(?P<org>[A-Za-z0-9_.\-]+)/(?P<repo>[A-Za-z0-9_.\-]+)/(zipball|tarball)/(?P<tag>[A-Za-z0-9_.\-]+)$`),
-		domain:    "{tag}.{repo}.{org}.{root}.secured.ifup.org",
+		domain:    "{tag}.{repo}.{org}.{root}",
 		sumPrefix: "https://github.com/{org}/{repo}/releases/download/{tag}/",
 	},
-	// Github
+	// Github release downloads
+	{
+		prefix: "github.com/",
+		// https://github.com/philips/releases-test/releases/download/v2.0/SHA256SUMS
+		regexp:    regexp.MustCompile(`^(?P<root>github\.com)/(?P<org>[A-Za-z0-9_.\-]+)/(?P<repo>[A-Za-z0-9_.\-]+)/releases/download/(?P<tag>[A-Za-z0-9_.\-]+)/(?P<file>[A-Za-z0-9_.\-]+)$`),
+		domain:    "{tag}.{repo}.{org}.{root}",
+		sumPrefix: "https://github.com/{org}/{repo}/releases/download/{tag}/",
+	},
+
+	// Github automatic archives
 	{
 		prefix: "github.com/",
 		// https://github.com/philips/releases-test/archive/v2.0.zip
 		regexp:    regexp.MustCompile(`^(?P<root>github\.com)/(?P<org>[A-Za-z0-9_.\-]+)/(?P<repo>[A-Za-z0-9_.\-]+)/archive/(?P<tag>[A-Za-z0-9_.\-]+)\.(zip|tar\.gz)$`),
-		domain:    "{tag}.{repo}.{org}.{root}.secured.ifup.org",
+		domain:    "{tag}.{repo}.{org}.{root}",
 		sumPrefix: "https://github.com/{org}/{repo}/releases/download/{tag}/",
 	},
 }
@@ -87,9 +95,6 @@ func matchesFromURL(downloadURL string, vcsPaths []*vcsPath) (map[string]string,
 		}
 		m := srv.regexp.FindStringSubmatch(downloadPath)
 		if m == nil {
-			if srv.prefix != "" {
-				return nil, fmt.Errorf("invalid %s domain path %q", srv.prefix, downloadPath)
-			}
 			continue
 		}
 
