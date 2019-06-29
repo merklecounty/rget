@@ -17,6 +17,7 @@ package cmd
 import (
 	"context"
 	"fmt"
+	"golang.org/x/crypto/acme/autocert"
 	"io/ioutil"
 	"log"
 	"net/http"
@@ -119,10 +120,27 @@ func server(cmd *cobra.Command, args []string) {
 	}
 	http.HandleFunc("/", sumRepo(*pubgc).handler)
 
-	_, err = gitcache.NewGitCache(privgit, "private")
+	privgc, err := gitcache.NewGitCache(privgit, "private")
 	if err != nil {
 		panic(err)
 	}
+
+	m := &autocert.Manager{
+		Cache:      privgc,
+		Prompt:     autocert.AcceptTOS,
+		HostPolicy: autocert.HostWhitelist("established.ifup.org"),
+		Email:      "brandon@ifup.org",
+	}
+	s := &http.Server{
+		Addr:      ":5002",
+		TLSConfig: m.TLSConfig(),
+	}
+	go func() {
+		err := s.ListenAndServeTLS("", "")
+		if err != nil {
+			panic(err)
+		}
+	}()
 
 	log.Fatal(http.ListenAndServe(":5001", nil))
 }
