@@ -31,7 +31,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/philips/autocertsan/internal/acmetest"
+	"github.com/philips/sget/autocert/internal/acmetest"
 	"golang.org/x/crypto/acme"
 )
 
