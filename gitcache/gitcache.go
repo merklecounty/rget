@@ -15,22 +15,23 @@ import (
 type GitCache struct {
 	dir  autocert.DirCache
 	repo git.Repository
+	auth githttp.BasicAuth
 }
 
 func NewGitCache(url, dir string) (*GitCache, error) {
 	gc := GitCache{
 		dir: autocert.DirCache(dir),
-	}
-
-	auth := &githttp.BasicAuth{
-		Username: "philips",
-		Password: "00f9a4bab7616d0a6b4e1feea76eade10cfc7739",
+		// TODO(philips): take a parameter
+		auth: githttp.BasicAuth{
+			Username: "philips",
+			Password: "00f9a4bab7616d0a6b4e1feea76eade10cfc7739",
+		},
 	}
 
 	if _, err := os.Stat(dir); os.IsNotExist(err) {
 		fmt.Printf("git clone %s %s --recursive\n", url, dir)
 		r, err := git.PlainClone(dir, false, &git.CloneOptions{
-			Auth:              auth,
+			Auth:              &gc.auth,
 			URL:               url,
 			RecurseSubmodules: git.DefaultSubmoduleRecursionDepth,
 		})
@@ -116,15 +117,10 @@ func (g GitCache) Put(ctx context.Context, name string, data []byte) error {
 
 	fmt.Println(obj)
 
-	auth := &githttp.BasicAuth{
-		Username: "philips",
-		Password: "00f9a4bab7616d0a6b4e1feea76eade10cfc7739",
-	}
-
 	fmt.Printf("git push\n")
 	// push using default options
 	err = g.repo.Push(&git.PushOptions{
-		Auth: auth,
+		Auth: &g.auth,
 	})
 	if err != nil {
 		return err
