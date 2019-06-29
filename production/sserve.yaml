@@ -13,48 +13,13 @@ spec:
         name: sserve
     spec:
       containers:
-      - name: git-sync
-        image: k8s.gcr.io/git-sync:v3.0.1
-        volumeMounts:
-        - name: sums
-          mountPath: /tmp/git
+      - name: sgetserve
+        image: quay.io/established/sget
+        imagePullPolicy: Always
         env:
-        - name: GIT_SYNC_REPO
-          value: https://github.com/philips/releases-test.git
-        - name: GIT_SYNC_DEST
-          value: sums
-      - name: nginx
-        image: nginx
-        volumeMounts:
-        - name: nginx-config
-          mountPath: /etc/nginx/conf.d/
-        - name: sums
-          mountPath: /usr/share/nginx/html
-      volumes:
-      - name: sums
-        emptyDir: {}
-      - name: nginx-config
-        configMap:
-          name: nginx-config
----
-apiVersion: v1
-kind: ConfigMap
-metadata:
-  name: nginx-config
-data:
-  default.conf: |
-    server {
-        listen       80  default_server;
-        server_name  _;
-        return       200;
-    }
-    server {
-       listen       80;
-       server_name   ~^(?<subdomain>.+\..+)\..*\.ifup.org$;
-
-       location / {
-         default_type text/plain;
-         root /usr/share/nginx/html;
-         try_files /sums/$subdomain =404;
-        }
-    }
+        - name: PUBLIC_REPO
+          value: "https://github.com/philips/releases-test"
+        - name: PRIVATE_REPO
+          value: "https://github.com/philips/sget-certificates"
+        command: ["/sget"]
+        args: ["server", "$(PUBLIC_REPO)", "$(PRIVATE_REPO)"]
