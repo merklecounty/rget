@@ -6,10 +6,8 @@ spec:
   type: LoadBalancer
   ports:
   - port: 80
-    targetPort: 5001
     name: http
   - port: 443
-    targetPort: 5002
     name: https
   selector:
     name: sserve
