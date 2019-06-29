@@ -172,8 +172,8 @@ go.opencensus.io/trace/internal
 go.opencensus.io/trace/tracestate
 go.opencensus.io
 # golang.org/x/crypto v0.0.0-20190621222207-cc06ce4a13d4
-golang.org/x/crypto/acme/autocert
 golang.org/x/crypto/acme
+golang.org/x/crypto/acme/autocert
 golang.org/x/crypto/openpgp
 golang.org/x/crypto/cryptobyte
 golang.org/x/crypto/cryptobyte/asn1
@@ -194,9 +194,9 @@ golang.org/x/crypto/internal/chacha20
 golang.org/x/crypto/poly1305
 golang.org/x/crypto/ed25519/internal/edwards25519
 golang.org/x/crypto/internal/subtle
-# golang.org/x/net v0.0.0-20190613194153-d28f0bde5980
-golang.org/x/net/context/ctxhttp
+# golang.org/x/net v0.0.0-20190628185345-da137c7871d7
 golang.org/x/net/idna
+golang.org/x/net/context/ctxhttp
 golang.org/x/net/context
 golang.org/x/net/trace
 golang.org/x/net/internal/timeseries
