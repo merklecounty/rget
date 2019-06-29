@@ -24,10 +24,9 @@ import (
 	"os"
 	"strings"
 
-	"golang.org/x/crypto/acme/autocert"
-
 	"github.com/spf13/cobra"
 
+	"github.com/philips/sget/autocert"
 	"github.com/philips/sget/gitcache"
 	"github.com/philips/sget/sgethash"
 	"github.com/philips/sget/sgetwellknown"
@@ -91,9 +90,16 @@ func (r sumRepo) handler(resp http.ResponseWriter, req *http.Request) {
 		resp.WriteHeader(http.StatusOK)
 		return
 	}
+	err = gc.Put(context.Background(), sums.ShortDomain(), sha256file)
+	if err != nil {
+		fmt.Printf("git put error: %v\n", err)
+		http.Error(resp, "internal service error", http.StatusInternalServerError)
+		return
+	}
+
 	err = gc.Put(context.Background(), sums.Domain(), sha256file)
 	if err != nil {
-		fmt.Printf("git put error: %v", err)
+		fmt.Printf("git put error: %v\n", err)
 		http.Error(resp, "internal service error", http.StatusInternalServerError)
 		return
 	}
@@ -101,11 +107,10 @@ func (r sumRepo) handler(resp http.ResponseWriter, req *http.Request) {
 	// Step 3. Create the Certificate object for the domain and save that as well
 	domain, err := sgetwellknown.Domain(sumsURL)
 	if err != nil {
-		fmt.Printf("wellknown domain error: %v", err)
+		fmt.Printf("wellknown domain error: %v\n", err)
 		resp.WriteHeader(http.StatusOK)
 		return
 	}
-
 	ctdomain := sums.Domain() + "." + domain
 	err = gc.Put(context.Background(), ctdomain, sha256file)
 	if err != nil {
@@ -135,24 +140,43 @@ func server(cmd *cobra.Command, args []string) {
 		panic(err)
 	}
 
-	hostPolicy := func(ctx context.Context, host string) error {
+	hostPolicyNoLog := func(ctx context.Context, host string) ([]string, error) {
 		if tld == host {
-			return nil
+			return nil, nil
 		}
 
 		if !strings.HasSuffix(host, tld) {
-			return errors.New(fmt.Sprintf("not in TLD %v", tld))
+			return nil, errors.New(fmt.Sprintf("not in TLD %v", tld))
 		}
 
 		key := strings.TrimSuffix(host, tld)
 
-		_, err := pubgc.Get(ctx, key)
-		if err == nil {
-			return nil
+		if strings.Contains(key, ".") {
+			return nil, errors.New(fmt.Sprintf("common name cannot have subdomains %v", tld))
 		}
 
-		// TODO(philips): leak a nicer error
-		return err
+		_, err := pubgc.Get(ctx, key)
+		if err != nil {
+			fmt.Printf("unknown merkle prefix %v for %v\n", key, host)
+			// TODO(philips): leak a nicer error
+			return nil, err
+		}
+
+		matches, err := pubgc.Prefix(ctx, key)
+		if err != nil {
+			return nil, err
+		}
+
+		fmt.Printf("%v SANs %v\n", key, matches)
+
+		return matches, nil
+	}
+
+	hostPolicy := func(ctx context.Context, host string) ([]string, error) {
+		fmt.Printf("hostPolicy called %v\n", host)
+		sans, err := hostPolicyNoLog(ctx, host)
+		fmt.Printf("hostPolicy err %v\n", err)
+		return sans, err
 	}
 
 	m := &autocert.Manager{

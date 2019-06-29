@@ -50,7 +50,7 @@ func init() {
 }
 
 func submit(cmd *cobra.Command, args []string) {
-	resp, err := http.PostForm("http://localhost:5001", url.Values{
+	resp, err := http.PostForm("https://established.ifup.org", url.Values{
 		"url": {args[0]},
 	})
 	defer resp.Body.Close()
