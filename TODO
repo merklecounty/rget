@@ -19,8 +19,11 @@ x Create container for sget serve
 x Use autocert to create API endpoint certificate
 x Create Kubernetes manifests for sget serve
 x Get sget serve running on Kubernetes cluster behind established.ifup.org load balancer
+x Use autocert to create certificates for first few sum files
+- Debug lack of SANs on cert issued by autocert....
+                  DNS:5c793eed08df469f8a40a0465f767677.established.ifup.org
+		  openssl x509 -in /tmp/cert -text -noout | less 
 - Add flag to submit to a different URL and add a default
-- Use autocert to create certificates for first few sum files
 
 ## MVP+1 - Guess at SHA256Sum location
 
