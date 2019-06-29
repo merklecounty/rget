@@ -17,9 +17,9 @@ x Verify SHA256Sum value matches domain merkle root
 ## MVP+0.5 - Generate certificates
 x Create container for sget serve
 x Use autocert to create API endpoint certificate
+x Create Kubernetes manifests for sget serve
+x Get sget serve running on Kubernetes cluster behind established.ifup.org load balancer
 - Add flag to submit to a different URL and add a default
-- Create Kubernetes manifests for sget serve
-- Get sget serve running on Kubernetes cluster behind secure.ifup.org load balancer
 - Use autocert to create certificates for first few sum files
 
 ## MVP+1 - Guess at SHA256Sum location
