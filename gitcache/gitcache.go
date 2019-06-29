@@ -4,12 +4,15 @@ import (
 	"context"
 	"fmt"
 	"os"
+	"path/filepath"
+	"strings"
 	"time"
 
-	"golang.org/x/crypto/acme/autocert"
 	"gopkg.in/src-d/go-git.v4"
 	"gopkg.in/src-d/go-git.v4/plumbing/object"
 	githttp "gopkg.in/src-d/go-git.v4/plumbing/transport/http"
+
+	"github.com/philips/sget/autocert"
 )
 
 type GitCache struct {
@@ -78,6 +81,31 @@ func (g GitCache) Delete(ctx context.Context, name string) error {
 
 func (g GitCache) Get(ctx context.Context, name string) ([]byte, error) {
 	return g.dir.Get(ctx, name)
+}
+
+func (g GitCache) Prefix(ctx context.Context, prefix string) (matches []string, err error) {
+	subDirToSkip := ".git"
+
+	err = filepath.Walk(string(g.dir), func(path string, info os.FileInfo, err error) error {
+		if err != nil {
+			fmt.Printf("failed accessing path %q: %v\n", path, err)
+			return err
+		}
+		if info.IsDir() && info.Name() == subDirToSkip {
+			fmt.Printf("skipping a dir without errors: %+v \n", info.Name())
+			return filepath.SkipDir
+		}
+		if strings.HasPrefix(path, prefix) {
+			matches = append(matches, path)
+		}
+		return nil
+	})
+	if err != nil {
+		fmt.Printf("error walking the path %q: %v\n", g.dir, err)
+		return nil, err
+	}
+
+	return
 }
 
 func (g GitCache) Put(ctx context.Context, name string, data []byte) error {
