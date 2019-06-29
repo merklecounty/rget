@@ -16,17 +16,21 @@ package cmd
 
 import (
 	"context"
+	"errors"
 	"fmt"
-	"golang.org/x/crypto/acme/autocert"
 	"io/ioutil"
 	"log"
 	"net/http"
 	"os"
+	"strings"
+
+	"golang.org/x/crypto/acme/autocert"
 
 	"github.com/spf13/cobra"
 
 	"github.com/philips/sget/gitcache"
 	"github.com/philips/sget/sgethash"
+	"github.com/philips/sget/sgetwellknown"
 )
 
 // serverCmd represents the server command
@@ -46,13 +50,13 @@ type sumRepo gitcache.GitCache
 
 func (r sumRepo) handler(resp http.ResponseWriter, req *http.Request) {
 	if req.Method != "POST" {
-		http.Error(resp, "Only POST is supported", http.StatusBadRequest)
+		http.Error(resp, "only POST is supported", http.StatusBadRequest)
 		return
 	}
 
 	err := req.ParseForm()
 	if err != nil {
-		http.Error(resp, "Invalid request", http.StatusBadRequest)
+		http.Error(resp, "invalid request", http.StatusBadRequest)
 		return
 	}
 
@@ -75,40 +79,46 @@ func (r sumRepo) handler(resp http.ResponseWriter, req *http.Request) {
 		}
 	}
 
-	l := sgethash.FromSHA256SumFile(string(sha256file))
+	sums := sgethash.FromSHA256SumFile(string(sha256file))
 
 	// Step 2: Save the file contents to the git repo by domain
-	domain := l.Domain()
 	gc := gitcache.GitCache(r)
 
-	_, err = gc.Get(context.Background(), domain)
+	_, err = gc.Get(context.Background(), sums.Domain())
 	if err == nil {
 		// TODO(philips): add rate limiting and DDoS protections here
 		fmt.Printf("cache hit: %v\n", sumsURL)
 		resp.WriteHeader(http.StatusOK)
 		return
 	}
-	err = gc.Put(context.Background(), domain, sha256file)
+	err = gc.Put(context.Background(), sums.Domain(), sha256file)
 	if err != nil {
 		fmt.Printf("git put error: %v", err)
-		os.Exit(1)
+		http.Error(resp, "internal service error", http.StatusInternalServerError)
+		return
 	}
 
-	/*
-		// Step 3. Create the Certificate object for the domain and save that as well
-		domain, err = sgetwellknown.Domain(sumsURL)
-		if err != nil {
-			fmt.Printf("wellknown domain error: %v", err)
-			os.Exit(1)
-		}
+	// Step 3. Create the Certificate object for the domain and save that as well
+	domain, err := sgetwellknown.Domain(sumsURL)
+	if err != nil {
+		fmt.Printf("wellknown domain error: %v", err)
+		resp.WriteHeader(http.StatusOK)
+		return
+	}
 
-		sums := sgethash.FromSHA256SumFile(string(sha256file))
-		ctdomain := sums.Domain() + "." + domain
-	*/
+	ctdomain := sums.Domain() + "." + domain
+	err = gc.Put(context.Background(), ctdomain, sha256file)
+	if err != nil {
+		fmt.Printf("git put error: %v", err)
+		http.Error(resp, "internal service error", http.StatusInternalServerError)
+		return
+	}
 
 	resp.WriteHeader(http.StatusOK)
 	return
 }
+
+const tld = ".established.ifup.org"
 
 func server(cmd *cobra.Command, args []string) {
 	pubgit := args[0]
@@ -125,14 +135,34 @@ func server(cmd *cobra.Command, args []string) {
 		panic(err)
 	}
 
+	hostPolicy := func(ctx context.Context, host string) error {
+		if tld == host {
+			return nil
+		}
+
+		if !strings.HasSuffix(host, tld) {
+			return errors.New(fmt.Sprintf("not in TLD %v", tld))
+		}
+
+		key := strings.TrimSuffix(host, tld)
+
+		_, err := pubgc.Get(ctx, key)
+		if err == nil {
+			return nil
+		}
+
+		// TODO(philips): leak a nicer error
+		return err
+	}
+
 	m := &autocert.Manager{
 		Cache:      privgc,
 		Prompt:     autocert.AcceptTOS,
-		HostPolicy: autocert.HostWhitelist("established.ifup.org"),
+		HostPolicy: hostPolicy,
 		Email:      "brandon@ifup.org",
 	}
 	s := &http.Server{
-		Addr:      ":5002",
+		Addr:      ":https",
 		TLSConfig: m.TLSConfig(),
 	}
 	go func() {
@@ -142,5 +172,5 @@ func server(cmd *cobra.Command, args []string) {
 		}
 	}()
 
-	log.Fatal(http.ListenAndServe(":5001", nil))
+	log.Fatal(http.ListenAndServe(":http", nil))
 }
