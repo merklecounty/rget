@@ -78,13 +78,13 @@ func HostWhitelist(hosts ...string) HostPolicy {
 		if !whitelist[host] {
 			return []string{}, fmt.Errorf("acme/autocert: host %q not configured in HostWhitelist", host)
 		}
-		return []string{}, nil
+		return []string{host}, nil
 	}
 }
 
 // defaultHostPolicy is used when Manager.HostPolicy is not set.
-func defaultHostPolicy(context.Context, string) ([]string, error) {
-	return []string{}, nil
+func defaultHostPolicy(_ context.Context, host string) ([]string, error) {
+	return []string{host}, nil
 }
 
 // Manager is a stateful certificate manager built on top of acme.Client.
@@ -269,12 +269,11 @@ func (m *Manager) GetCertificate(hello *tls.ClientHelloInfo) (*tls.Certificate, 
 	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Minute)
 	defer cancel()
 
-	// get the CN for this hostname
+	// get the sans for this hostname and validate it is OK
 	san, err := m.hostPolicy()(ctx, strings.TrimSuffix(name, "."))
 	if err != nil {
 		return nil, err
 	}
-	name = san[0]
 
 	// Check whether this is a token cert requested for TLS-SNI or TLS-ALPN challenge.
 	if wantsTokenCert(hello) {
@@ -292,6 +291,9 @@ func (m *Manager) GetCertificate(hello *tls.ClientHelloInfo) (*tls.Certificate, 
 		// TODO: cache error results?
 		return nil, fmt.Errorf("acme/autocert: no token cert for %q", name)
 	}
+
+	// from here on out the name should only be the CN
+	name = san[0]
 
 	// regular domain
 	ck := certKey{
@@ -657,9 +659,12 @@ func (m *Manager) authorizedCert(ctx context.Context, key crypto.Signer, ck cert
 		return nil, nil, err
 	}
 
-	if err := m.verify(ctx, client, ck.domain); err != nil {
-		return nil, nil, err
+	for _, domain := range san {
+		if err := m.verify(ctx, client, domain); err != nil {
+			return nil, nil, err
+		}
 	}
+
 	csr, err := certRequest(key, ck.domain, m.ExtraExtensions, san...)
 	if err != nil {
 		return nil, nil, err
