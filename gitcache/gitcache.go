@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
+	"sort"
 	"strings"
 	"time"
 
@@ -19,6 +20,33 @@ type GitCache struct {
 	dir  autocert.DirCache
 	repo git.Repository
 	auth githttp.BasicAuth
+}
+
+func prefix(dir autocert.DirCache, prefix string) (matches []string, err error) {
+	subDirToSkip := ".git"
+
+	err = filepath.Walk(string(dir), func(path string, info os.FileInfo, err error) error {
+		if err != nil {
+			fmt.Printf("failed accessing path %q: %v\n", path, err)
+			return err
+		}
+		if info.IsDir() && info.Name() == subDirToSkip {
+			fmt.Printf("skipping a dir without errors: %+v \n", info.Name())
+			return filepath.SkipDir
+		}
+		if strings.HasPrefix(info.Name(), prefix) {
+			matches = append(matches, info.Name())
+		}
+		return nil
+	})
+	if err != nil {
+		fmt.Printf("error walking the path %q: %v\n", dir, err)
+		return nil, err
+	}
+
+	sort.Strings(matches)
+
+	return
 }
 
 func NewGitCache(url, dir string) (*GitCache, error) {
@@ -79,33 +107,13 @@ func (g GitCache) Delete(ctx context.Context, name string) error {
 	return err
 }
 
-func (g GitCache) Get(ctx context.Context, name string) ([]byte, error) {
-	return g.dir.Get(ctx, name)
+func (g GitCache) Prefix(ctx context.Context, p string) ([]string, error) {
+	matches, err := prefix(g.dir, p)
+	return matches, err
 }
 
-func (g GitCache) Prefix(ctx context.Context, prefix string) (matches []string, err error) {
-	subDirToSkip := ".git"
-
-	err = filepath.Walk(string(g.dir), func(path string, info os.FileInfo, err error) error {
-		if err != nil {
-			fmt.Printf("failed accessing path %q: %v\n", path, err)
-			return err
-		}
-		if info.IsDir() && info.Name() == subDirToSkip {
-			fmt.Printf("skipping a dir without errors: %+v \n", info.Name())
-			return filepath.SkipDir
-		}
-		if strings.HasPrefix(path, prefix) {
-			matches = append(matches, path)
-		}
-		return nil
-	})
-	if err != nil {
-		fmt.Printf("error walking the path %q: %v\n", g.dir, err)
-		return nil, err
-	}
-
-	return
+func (g GitCache) Get(ctx context.Context, name string) ([]byte, error) {
+	return g.dir.Get(ctx, name)
 }
 
 func (g GitCache) Put(ctx context.Context, name string, data []byte) error {
