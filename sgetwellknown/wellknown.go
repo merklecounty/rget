@@ -107,6 +107,10 @@ func matchesFromURL(downloadURL string, vcsPaths []*vcsPath) (map[string]string,
 				match[name] = m[i]
 			}
 		}
+
+		// https://community.letsencrypt.org/t/dns-name-has-too-many-labels-error/21577
+		match["tag"] = strings.ReplaceAll(match["tag"], ".", "-")
+
 		if srv.domain != "" {
 			match["domain"] = expand(match, srv.domain)
 		}
