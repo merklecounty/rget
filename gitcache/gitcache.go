@@ -31,7 +31,6 @@ func prefix(dir autocert.DirCache, prefix string) (matches []string, err error) 
 			return err
 		}
 		if info.IsDir() && info.Name() == subDirToSkip {
-			fmt.Printf("skipping a dir without errors: %+v \n", info.Name())
 			return filepath.SkipDir
 		}
 		if strings.HasPrefix(info.Name(), prefix) {
