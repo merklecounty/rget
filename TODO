@@ -20,19 +20,9 @@ x Use autocert to create API endpoint certificate
 x Create Kubernetes manifests for sget serve
 x Get sget serve running on Kubernetes cluster behind established.ifup.org load balancer
 x Use autocert to create certificates for first few sum files
-- Debug lack of SANs on cert issued by autocert....
-                  DNS:5c793eed08df469f8a40a0465f767677.established.ifup.org
-		  openssl x509 -in /tmp/cert -text -noout | less 
-looks like prefix code isn't working right:
-	hostPolicy called 5c793eed08df469f8a40a0465f767677.established.ifup.org
-	skipping a dir without errors: .git
-	5c793eed08df469f8a40a0465f767677 SANs []
-	hostPolicy err <nil>
-
-and potentially need to change hostPolicy to actually return a CN to fix the code paths where autocert wants to hit the cache for a SAN but that cert won't exist:
-019/06/29 06:25:18 http: TLS handshake error from 10.52.2.1:33924: common name cannot have subdomains .established.ifup.org
-hostPolicy called 5c793eed08df469f8a40a0465f767677.a73ecbf830829713e0037efd9b1a357e.v2.0.releases-test.philips.github.com.establis$
-ed.ifup.org
+x Prefix code isn't working right
+x Debug lack of SANs on cert issued by autocert....
+- Figure out this error: 403 urn:acme:error:unauthorized: Error creating new cert :: authorizations for these names not found or expired: 6b2b7417b25c229e550386dfc136858d.9b008b51aa16772272cf33b2cc1aee22.established.ifup.org, 6b2b7417b25c229e550386dfc136858d.9b008b51aa16772272cf33b2cc1aee22.v1-0.releases-test.philips.github.com.established.ifup.org
 - Add flag to submit to a different URL and add a default
 
 ## MVP+1 - Guess at SHA256Sum location
