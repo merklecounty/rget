@@ -22,15 +22,15 @@ x Get sget serve running on Kubernetes cluster behind established.ifup.org load 
 x Use autocert to create certificates for first few sum files
 x Prefix code isn't working right
 x Debug lack of SANs on cert issued by autocert....
-- Figure out this error: 403 urn:acme:error:unauthorized: Error creating new cert :: authorizations for these names not found or expired: 6b2b7417b25c229e550386dfc136858d.9b008b51aa16772272cf33b2cc1aee22.established.ifup.org, 6b2b7417b25c229e550386dfc136858d.9b008b51aa16772272cf33b2cc1aee22.v1-0.releases-test.philips.github.com.established.ifup.org
-- Add flag to submit to a different URL and add a default
+x Figure out this error: 403 urn:acme:error:unauthorized: Error creating new cert :: authorizations for these names not found or expired: 6b2b7417b25c229e550386dfc136858d.9b008b51aa16772272cf33b2cc1aee22.established.ifup.org, 6b2b7417b25c229e550386dfc136858d.9b008b51aa16772272cf33b2cc1aee22.v1-0.releases-test.philips.github.com.established.ifup.org
+x Add flag to submit to a different URL and add a default
 
 ## MVP+1 - Guess at SHA256Sum location
 
 Use: let publisher put the SHA256Sum somewhere and download it to guess at domain
 x Create subcommand to generate SHA256Sum for user to upload
-- Create URL guesser for SHA256Sum file
-- Generate CT URL based on the URL guess
+x Create URL guesser for SHA256Sum file
+x Generate CT URL based on the URL guess
 - Ensure embedded SCT check also checks CN
 
 # Public Release
