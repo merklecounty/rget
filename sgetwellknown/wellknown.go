@@ -7,6 +7,11 @@ import (
 	"strings"
 )
 
+// PublicServiceHost is the hostname of the public service that is used by
+// default. In the future this will be the fallback host if a well-known
+// isn't provided on the root of a domain.
+const PublicServiceHost = "established.ifup.org"
+
 // A vcsPath describes how to convert an import path into a
 // version control system and repository name.
 type vcsPath struct {

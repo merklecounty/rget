@@ -123,8 +123,6 @@ func (r sumRepo) handler(resp http.ResponseWriter, req *http.Request) {
 	return
 }
 
-const tld = ".established.ifup.org"
-
 func server(cmd *cobra.Command, args []string) {
 	pubgit := args[0]
 	privgit := args[1]
@@ -141,15 +139,15 @@ func server(cmd *cobra.Command, args []string) {
 	}
 
 	hostPolicyNoLog := func(ctx context.Context, host string) ([]string, error) {
-		if tld == host {
-			return nil, nil
+		if sgetwellknown.PublicServiceHost == host {
+			return []string{host}, nil
 		}
 
-		if !strings.HasSuffix(host, tld) {
-			return nil, errors.New(fmt.Sprintf("not in TLD %v", tld))
+		if !strings.HasSuffix(host, "."+sgetwellknown.PublicServiceHost) {
+			return nil, errors.New(fmt.Sprintf("not in TLD %v", sgetwellknown.PublicServiceHost))
 		}
 
-		key := strings.TrimSuffix(host, tld)
+		key := strings.TrimSuffix(host, "."+sgetwellknown.PublicServiceHost)
 
 		// Reduce to the shortest domain
 		parts := strings.Split(key, ".")

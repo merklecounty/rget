@@ -138,7 +138,7 @@ func get(cmd *cobra.Command, args []string) {
 	}
 
 	sums := sgethash.FromSHA256SumFile(string(sha256file))
-	cturl := "https://" + sums.Domain() + "." + domain
+	cturl := "https://" + sums.Domain() + "." + domain + "." + sgetwellknown.PublicServiceHost
 
 	hc := &http.Client{Timeout: 30 * time.Second}
 	ctx := context.Background()
