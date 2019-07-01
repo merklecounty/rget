@@ -25,7 +25,9 @@ type vcsPath struct {
 // commonly-used VCS hosting sites (github.com/user/dir)
 // and import paths referring to a fully-qualified importPath
 // containing a VCS type (foo.com/repo.git/dir)
-var vcsPaths = []*vcsPath{
+var vcsPaths []*vcsPath
+
+var githubPaths = []*vcsPath{
 	// Github API
 	{
 		prefix: "api.github.com/",
@@ -51,6 +53,28 @@ var vcsPaths = []*vcsPath{
 		domain:    "{dnstag}.{repo}.{org}.{root}",
 		sumPrefix: "https://github.com/{org}/{repo}/releases/download/{tag}/",
 	},
+}
+
+func init() {
+	vcsPaths = append(vcsPaths, githubPaths...)
+}
+
+// GitHubMatches returns a parsed out matches map for GitHub URLs. This can be
+// used for taking a copy/pasteable URL from a user and turning it into things
+// for the GitHub API.
+func GitHubMatches(githubURL string) (map[string]string, error) {
+	otherGHPaths := []*vcsPath{
+		// Github release tag
+		{
+			prefix: "github.com/",
+			// https://github.com/philips/releases-test/releases/tag/v2.0
+			regexp:    regexp.MustCompile(`^(?P<root>github\.com)/(?P<org>[A-Za-z0-9_.\-]+)/(?P<repo>[A-Za-z0-9_.\-]+)/releases/tag/(?P<tag>[A-Za-z0-9_.\-]+)$`),
+			domain:    "{dnstag}.{repo}.{org}.{root}",
+			sumPrefix: "https://github.com/{org}/{repo}/releases/download/{tag}/",
+		},
+	}
+
+	return matchesFromURL(githubURL, append(githubPaths, otherGHPaths...))
 }
 
 // Domain takes a target URL and returns the domain postfix to be appended to a
