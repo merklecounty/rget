@@ -10,10 +10,10 @@ import (
 	"github.com/google/go-github/v24/github"
 	"github.com/nmrshll/oauth2-noserver"
 	"github.com/spf13/cobra"
-	"github.com/spf13/viper"
 	"golang.org/x/oauth2"
 
 	"github.com/philips/sget/sgethash"
+	"github.com/philips/sget/sgetwellknown"
 )
 
 var publishReleaseSumsCmd = &cobra.Command{
@@ -28,6 +28,17 @@ func publishReleaseSumsMain(cmd *cobra.Command, args []string) {
 	var releases []github.RepositoryRelease
 
 	ctx := context.Background()
+
+	if len(args) != 1 {
+		cmd.Usage()
+		os.Exit(1)
+	}
+
+	m, err := sgetwellknown.GitHubMatches(args[0])
+	if err != nil {
+		fmt.Printf("matches: %v\n", err)
+		os.Exit(1)
+	}
 
 	conf := &oauth2.Config{
 		ClientID:     "921edc6d2d9ca9630f89",
@@ -46,12 +57,8 @@ func publishReleaseSumsMain(cmd *cobra.Command, args []string) {
 
 	client := github.NewClient(tc.Client)
 
-	owner := viper.GetString("owner")
-	repo := viper.GetString("repo")
-	tag := viper.GetString("tag")
-
-	if tag != "" {
-		release, _, err := client.Repositories.GetReleaseByTag(ctx, owner, repo, tag)
+	if m["tag"] != "" {
+		release, _, err := client.Repositories.GetReleaseByTag(ctx, m["org"], m["repo"], m["tag"])
 		if err != nil {
 			panic(err)
 		}
@@ -71,8 +78,10 @@ func publishReleaseSumsMain(cmd *cobra.Command, args []string) {
 		sha256sumfile := urls.SHA256SumFile()
 
 		content := []byte(sha256sumfile)
-		uploadSums(client, owner, repo, tag, r, content)
+		uploadSums(client, m["org"], m["repo"], m["tag"], r, content)
 	}
+
+	fmt.Printf("Successfully uploaded https://github.com/%s/%s/releases/download/%s/SHA256SUMS\n", m["org"], m["repo"], m["tag"])
 
 }
 
