@@ -26,7 +26,7 @@ var vcsPaths = []*vcsPath{
 		prefix: "api.github.com/",
 		// https://api.github.com/repos/philips/releases-test/zipball/v2.0
 		regexp:    regexp.MustCompile(`^api\.(?P<root>github\.com)/repos/(?P<org>[A-Za-z0-9_.\-]+)/(?P<repo>[A-Za-z0-9_.\-]+)/(zipball|tarball)/(?P<tag>[A-Za-z0-9_.\-]+)$`),
-		domain:    "{tag}.{repo}.{org}.{root}",
+		domain:    "{dnstag}.{repo}.{org}.{root}",
 		sumPrefix: "https://github.com/{org}/{repo}/releases/download/{tag}/",
 	},
 	// Github release downloads
@@ -34,7 +34,7 @@ var vcsPaths = []*vcsPath{
 		prefix: "github.com/",
 		// https://github.com/philips/releases-test/releases/download/v2.0/SHA256SUMS
 		regexp:    regexp.MustCompile(`^(?P<root>github\.com)/(?P<org>[A-Za-z0-9_.\-]+)/(?P<repo>[A-Za-z0-9_.\-]+)/releases/download/(?P<tag>[A-Za-z0-9_.\-]+)/(?P<file>[A-Za-z0-9_.\-]+)$`),
-		domain:    "{tag}.{repo}.{org}.{root}",
+		domain:    "{dnstag}.{repo}.{org}.{root}",
 		sumPrefix: "https://github.com/{org}/{repo}/releases/download/{tag}/",
 	},
 
@@ -43,7 +43,7 @@ var vcsPaths = []*vcsPath{
 		prefix: "github.com/",
 		// https://github.com/philips/releases-test/archive/v2.0.zip
 		regexp:    regexp.MustCompile(`^(?P<root>github\.com)/(?P<org>[A-Za-z0-9_.\-]+)/(?P<repo>[A-Za-z0-9_.\-]+)/archive/(?P<tag>[A-Za-z0-9_.\-]+)\.(zip|tar\.gz)$`),
-		domain:    "{tag}.{repo}.{org}.{root}",
+		domain:    "{dnstag}.{repo}.{org}.{root}",
 		sumPrefix: "https://github.com/{org}/{repo}/releases/download/{tag}/",
 	},
 }
@@ -109,7 +109,7 @@ func matchesFromURL(downloadURL string, vcsPaths []*vcsPath) (map[string]string,
 		}
 
 		// https://community.letsencrypt.org/t/dns-name-has-too-many-labels-error/21577
-		match["tag"] = strings.ReplaceAll(match["tag"], ".", "-")
+		match["dnstag"] = strings.ReplaceAll(match["tag"], ".", "-")
 
 		if srv.domain != "" {
 			match["domain"] = expand(match, srv.domain)
