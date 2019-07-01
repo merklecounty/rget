@@ -151,9 +151,12 @@ func server(cmd *cobra.Command, args []string) {
 
 		key := strings.TrimSuffix(host, tld)
 
-		if strings.Contains(key, ".") {
-			return nil, errors.New(fmt.Sprintf("common name cannot have subdomains %v", tld))
+		// Reduce to the shortest domain
+		parts := strings.Split(key, ".")
+		if len(parts) == 0 {
+			return nil, errors.New("common name empty")
 		}
+		key = parts[0]
 
 		_, err := pubgc.Get(ctx, key)
 		if err != nil {
@@ -167,7 +170,9 @@ func server(cmd *cobra.Command, args []string) {
 			return nil, err
 		}
 
-		fmt.Printf("%v SANs %v\n", key, matches)
+		for i := range matches {
+			matches[i] = matches[i] + "." + sgetwellknown.PublicServiceHost
+		}
 
 		return matches, nil
 	}
