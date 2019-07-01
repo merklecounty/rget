@@ -31,7 +31,8 @@ Use: let publisher put the SHA256Sum somewhere and download it to guess at domai
 x Create subcommand to generate SHA256Sum for user to upload
 x Create URL guesser for SHA256Sum file
 x Generate CT URL based on the URL guess
-- Ensure embedded SCT check also checks CN
+x Ensure embedded SCT check also checks CN
+- Have github subcommands take a URL not flags for project, org, tag
 
 # Public Release
 - Take github credentials via environment variables

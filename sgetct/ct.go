@@ -92,12 +92,22 @@ func GetAndCheckSiteChain(ctx context.Context, lf logInfoFactory, target string,
 
 	// Convert base crypto/x509.Certificates to our forked x509.Certificate type.
 	chain := make([]*x509.Certificate, len(goChain))
+	var verifiedHostname bool
 	for i, goCert := range goChain {
 		cert, err := x509.ParseCertificate(goCert.Raw)
 		if err != nil {
 			return nil, 0, 0, fmt.Errorf("failed to convert Go Certificate [%d]: %v", i, err)
 		}
+
+		if err := cert.VerifyHostname(u.Host); err == nil {
+			verifiedHostname = true
+		}
+
 		chain[i] = cert
+	}
+
+	if verifiedHostname == false {
+		return nil, 0, 0, errors.New("cannot verify host for target")
 	}
 
 	// Check externally-provided SCTs.
