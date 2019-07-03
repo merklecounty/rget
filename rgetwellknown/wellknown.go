@@ -1,4 +1,4 @@
-package sgetwellknown
+package rgetwellknown
 
 import (
 	"errors"

@@ -12,8 +12,8 @@ import (
 	"github.com/spf13/cobra"
 	"golang.org/x/oauth2"
 
-	"github.com/philips/sget/sgethash"
-	"github.com/philips/sget/sgetwellknown"
+	"github.com/merklecounty/rget/rgethash"
+	"github.com/merklecounty/rget/rgetwellknown"
 )
 
 var publishReleaseSumsCmd = &cobra.Command{
@@ -34,7 +34,7 @@ func publishReleaseSumsMain(cmd *cobra.Command, args []string) {
 		os.Exit(1)
 	}
 
-	m, err := sgetwellknown.GitHubMatches(args[0])
+	m, err := rgetwellknown.GitHubMatches(args[0])
 	if err != nil {
 		fmt.Printf("matches: %v\n", err)
 		os.Exit(1)
@@ -68,7 +68,7 @@ func publishReleaseSumsMain(cmd *cobra.Command, args []string) {
 		os.Exit(1)
 	}
 
-	urls := sgethash.URLSumList{}
+	urls := rgethash.URLSumList{}
 	for _, r := range releases {
 		for _, a := range r.Assets {
 			urls.AddURL(*a.BrowserDownloadURL)
@@ -88,7 +88,7 @@ func publishReleaseSumsMain(cmd *cobra.Command, args []string) {
 func uploadSums(client *github.Client, owner, repo, tag string, release github.RepositoryRelease, content []byte) {
 	ctx := context.Background()
 
-	tmpfile, err := ioutil.TempFile("", "sget*")
+	tmpfile, err := ioutil.TempFile("", "rget*")
 	if err != nil {
 		fmt.Printf("%v\n", err)
 		os.Exit(1)

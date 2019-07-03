@@ -8,8 +8,8 @@ import (
 	"github.com/google/go-github/v24/github"
 	"github.com/spf13/cobra"
 
-	"github.com/philips/sget/sgethash"
-	"github.com/philips/sget/sgetwellknown"
+	"github.com/merklecounty/rget/rgethash"
+	"github.com/merklecounty/rget/rgetwellknown"
 )
 
 var generateReleaseSumsCmd = &cobra.Command{
@@ -19,7 +19,7 @@ var generateReleaseSumsCmd = &cobra.Command{
 which is printed out to stdout.
 
 example:
-  sget generate-release-sums https://github.com/github/hub/releases/tag/v2.12.1
+  rget generate-release-sums https://github.com/github/hub/releases/tag/v2.12.1
 `,
 	Run: generateReleaseSumsMain,
 }
@@ -35,7 +35,7 @@ func generateReleaseSumsMain(cmd *cobra.Command, args []string) {
 		os.Exit(1)
 	}
 
-	m, err := sgetwellknown.GitHubMatches(args[0])
+	m, err := rgetwellknown.GitHubMatches(args[0])
 	if err != nil {
 		fmt.Printf("matches: %v\n", err)
 		os.Exit(1)
@@ -52,7 +52,7 @@ func generateReleaseSumsMain(cmd *cobra.Command, args []string) {
 		os.Exit(1)
 	}
 
-	urls := sgethash.URLSumList{}
+	urls := rgethash.URLSumList{}
 	for _, r := range releases {
 		for _, a := range r.Assets {
 			urls.AddURL(*a.BrowserDownloadURL)

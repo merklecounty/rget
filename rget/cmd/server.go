@@ -27,16 +27,16 @@ import (
 	"github.com/spf13/cobra"
 	githttp "gopkg.in/src-d/go-git.v4/plumbing/transport/http"
 
-	"github.com/philips/sget/autocert"
-	"github.com/philips/sget/gitcache"
-	"github.com/philips/sget/sgethash"
-	"github.com/philips/sget/sgetwellknown"
+	"github.com/merklecounty/rget/autocert"
+	"github.com/merklecounty/rget/gitcache"
+	"github.com/merklecounty/rget/rgethash"
+	"github.com/merklecounty/rget/rgetwellknown"
 )
 
 // serverCmd represents the server command
 var serverCmd = &cobra.Command{
 	Use:   "server",
-	Short: "sget API server and TLS server",
+	Short: "rget API server and TLS server",
 	Long: `Provides an HTTP and HTTPS server that saves into two different
 git repos one with TLS secrets and one with public data that can be audited.`,
 	Run: server,
@@ -79,7 +79,7 @@ func (r sumRepo) handler(resp http.ResponseWriter, req *http.Request) {
 		}
 	}
 
-	sums := sgethash.FromSHA256SumFile(string(sha256file))
+	sums := rgethash.FromSHA256SumFile(string(sha256file))
 
 	// Step 2: Save the file contents to the git repo by domain
 	gc := gitcache.GitCache(r)
@@ -106,7 +106,7 @@ func (r sumRepo) handler(resp http.ResponseWriter, req *http.Request) {
 	}
 
 	// Step 3. Create the Certificate object for the domain and save that as well
-	domain, err := sgetwellknown.Domain(sumsURL)
+	domain, err := rgetwellknown.Domain(sumsURL)
 	if err != nil {
 		fmt.Printf("wellknown domain error: %v\n", err)
 		resp.WriteHeader(http.StatusOK)
@@ -153,15 +153,15 @@ func server(cmd *cobra.Command, args []string) {
 	}
 
 	hostPolicyNoLog := func(ctx context.Context, host string) ([]string, error) {
-		if sgetwellknown.PublicServiceHost == host {
+		if rgetwellknown.PublicServiceHost == host {
 			return []string{host}, nil
 		}
 
-		if !strings.HasSuffix(host, "."+sgetwellknown.PublicServiceHost) {
-			return nil, errors.New(fmt.Sprintf("not in TLD %v", sgetwellknown.PublicServiceHost))
+		if !strings.HasSuffix(host, "."+rgetwellknown.PublicServiceHost) {
+			return nil, errors.New(fmt.Sprintf("not in TLD %v", rgetwellknown.PublicServiceHost))
 		}
 
-		key := strings.TrimSuffix(host, "."+sgetwellknown.PublicServiceHost)
+		key := strings.TrimSuffix(host, "."+rgetwellknown.PublicServiceHost)
 
 		// Reduce to the shortest domain
 		parts := strings.Split(key, ".")
@@ -183,7 +183,7 @@ func server(cmd *cobra.Command, args []string) {
 		}
 
 		for i := range matches {
-			matches[i] = matches[i] + "." + sgetwellknown.PublicServiceHost
+			matches[i] = matches[i] + "." + rgetwellknown.PublicServiceHost
 		}
 
 		return matches, nil

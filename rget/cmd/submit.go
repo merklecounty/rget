@@ -19,7 +19,7 @@ import (
 	"net/http"
 	"net/url"
 
-	"github.com/philips/sget/sgetwellknown"
+	"github.com/merklecounty/rget/rgetwellknown"
 	"github.com/spf13/cobra"
 )
 
@@ -51,7 +51,7 @@ func init() {
 }
 
 func submit(cmd *cobra.Command, args []string) {
-	resp, err := http.PostForm("https://"+sgetwellknown.PublicServiceHost, url.Values{
+	resp, err := http.PostForm("https://"+rgetwellknown.PublicServiceHost, url.Values{
 		"url": {args[0]},
 	})
 	defer resp.Body.Close()

@@ -14,7 +14,7 @@
 
 package main
 
-import "github.com/philips/sget/sget/cmd"
+import "github.com/merklecounty/rget/rget/cmd"
 
 func main() {
 	cmd.Execute()

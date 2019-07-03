@@ -8,7 +8,7 @@ import (
 	"reflect"
 	"testing"
 
-	"github.com/philips/sget/autocert"
+	"github.com/merklecounty/rget/autocert"
 )
 
 func TestDirCache(t *testing.T) {

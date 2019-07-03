@@ -1,4 +1,4 @@
-package sgethash
+package rgethash
 
 import (
 	"testing"

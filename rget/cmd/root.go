@@ -34,20 +34,20 @@ import (
 	"github.com/google/certificate-transparency-go/x509"
 	"github.com/google/certificate-transparency-go/x509util"
 
-	"github.com/philips/sget/sgetct"
-	"github.com/philips/sget/sgethash"
-	"github.com/philips/sget/sgetwellknown"
+	"github.com/merklecounty/rget/rgetct"
+	"github.com/merklecounty/rget/rgethash"
+	"github.com/merklecounty/rget/rgetwellknown"
 )
 
 var cfgFile string
 
 // rootCmd represents the base command when called without any subcommands
 var rootCmd = &cobra.Command{
-	Use:   "sget [URL]",
+	Use:   "rget [URL]",
 	Short: "Get a URL and verify the contents with CT Log backed transparency",
-	Long: `sget is similar to other popular URL fetchers with an additional layer of security.
+	Long: `rget is similar to other popular URL fetchers with an additional layer of security.
 By using the Certificate Transparency Log infrastructure that enables third-party auditing of
-the web's certificate authority infrastructure sget can give you strong guarantees that the
+the web's certificate authority infrastructure rget can give you strong guarantees that the
 cryptographic hash digest of the binary you are downloading appears in a public log.
 `,
 
@@ -71,7 +71,7 @@ func init() {
 	// Here you will define your flags and configuration settings.
 	// Cobra supports persistent flags, which, if defined here,
 	// will be global for your application.
-	rootCmd.PersistentFlags().StringVar(&cfgFile, "config", "", "config file (default is $HOME/.sget.yaml)")
+	rootCmd.PersistentFlags().StringVar(&cfgFile, "config", "", "config file (default is $HOME/.rget.yaml)")
 
 	// Cobra also supports local flags, which will only run
 	// when this action is called directly.
@@ -91,9 +91,9 @@ func initConfig() {
 			os.Exit(1)
 		}
 
-		// Search config in home directory with name ".sget" (without extension).
+		// Search config in home directory with name ".rget" (without extension).
 		viper.AddConfigPath(home)
-		viper.SetConfigName(".sget")
+		viper.SetConfigName(".rget")
 	}
 
 	viper.AutomaticEnv() // read in environment variables that match
@@ -112,7 +112,7 @@ func get(cmd *cobra.Command, args []string) {
 	durl := args[0]
 
 	// Step 1: Download the SHA256SUMS that is correct for the URL
-	prefix, err := sgetwellknown.SumPrefix(durl)
+	prefix, err := rgetwellknown.SumPrefix(durl)
 	sumsURL := prefix + "SHA256SUMS"
 	fmt.Printf("Downloading sums file: %v\n", sumsURL)
 	response, err := http.Get(sumsURL)
@@ -131,14 +131,14 @@ func get(cmd *cobra.Command, args []string) {
 	}
 
 	// Step 2. Generate the CT URL from the SHA256SUMS file
-	domain, err := sgetwellknown.Domain(durl)
+	domain, err := rgetwellknown.Domain(durl)
 	if err != nil {
 		fmt.Printf("wellknown domain error: %v", err)
 		os.Exit(1)
 	}
 
-	sums := sgethash.FromSHA256SumFile(string(sha256file))
-	cturl := "https://" + sums.Domain() + "." + domain + "." + sgetwellknown.PublicServiceHost
+	sums := rgethash.FromSHA256SumFile(string(sha256file))
+	cturl := "https://" + sums.Domain() + "." + domain + "." + rgetwellknown.PublicServiceHost
 
 	hc := &http.Client{Timeout: 30 * time.Second}
 	ctx := context.Background()
@@ -158,7 +158,7 @@ func get(cmd *cobra.Command, args []string) {
 
 	// Get chain served online for TLS connection to site, and check any SCTs
 	// provided alongside on the connection along the way.
-	chain, valid, invalid, err = sgetct.GetAndCheckSiteChain(ctx, lf, cturl, ll, hc)
+	chain, valid, invalid, err = rgetct.GetAndCheckSiteChain(ctx, lf, cturl, ll, hc)
 	if err != nil {
 		panic(fmt.Sprintf("%s: failed to get cert chain: %v", cturl, err))
 	}
@@ -166,7 +166,7 @@ func get(cmd *cobra.Command, args []string) {
 	totalInvalid += invalid
 
 	// Check the chain for embedded SCTs.
-	valid, invalid = sgetct.CheckChain(ctx, lf, chain, ll, hc)
+	valid, invalid = rgetct.CheckChain(ctx, lf, chain, ll, hc)
 	fmt.Printf("Found %d embedded SCTs for %q, of which %d were validated\n", (valid + invalid), domain, valid)
 	totalInvalid += invalid
 

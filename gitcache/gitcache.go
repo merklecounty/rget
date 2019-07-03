@@ -13,7 +13,7 @@ import (
 	"gopkg.in/src-d/go-git.v4/plumbing/object"
 	githttp "gopkg.in/src-d/go-git.v4/plumbing/transport/http"
 
-	"github.com/philips/sget/autocert"
+	"github.com/merklecounty/rget/autocert"
 )
 
 type GitCache struct {

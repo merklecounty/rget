@@ -1,4 +1,4 @@
-module github.com/philips/sget
+module github.com/merklecounty/rget
 
 go 1.12
 

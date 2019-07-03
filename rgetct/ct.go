@@ -1,4 +1,4 @@
-package sgetct
+package rgetct
 
 import (
 	"context"

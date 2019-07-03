@@ -3,7 +3,7 @@ before:
     # you may remove this if you don't use vgo
     - go mod download
 build:
-  main: ./sget
+  main: ./rget
   env:
     - CGO_ENABLED=0
   goos:
