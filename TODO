@@ -38,6 +38,9 @@ x Ensure embedded SCT check also checks CN
 - Take github credentials via environment variables
 - Define roadmap for self-hosting
 - Define well-known URL for discovering domain for release discovery for a domain
+- Add log-search command that dumps URLs to various log search engines 
+  - https://crt.sh/?Identity=%25.v2-0.releases-test.philips.github.com.established.ifup.org
+  - https://transparencyreport.google.com/https/certificates?cert_search_auth=&cert_search_cert=&cert_search=include_expired:true;include_subdomains:true;domain:v2-0.releases-test.philips.github.com.established.ifup.org&lu=cert_search
 
 ## PR+1 - All file GH Release Test
 
