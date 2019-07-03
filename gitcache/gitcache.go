@@ -48,14 +48,11 @@ func prefix(dir autocert.DirCache, prefix string) (matches []string, err error) 
 	return
 }
 
-func NewGitCache(url, dir string) (*GitCache, error) {
+func NewGitCache(url string, auth githttp.BasicAuth, dir string) (*GitCache, error) {
 	gc := GitCache{
 		dir: autocert.DirCache(dir),
 		// TODO(philips): take a parameter
-		auth: githttp.BasicAuth{
-			Username: "philips",
-			Password: "00f9a4bab7616d0a6b4e1feea76eade10cfc7739",
-		},
+		auth: auth,
 	}
 
 	if _, err := os.Stat(dir); os.IsNotExist(err) {

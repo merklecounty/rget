@@ -25,6 +25,7 @@ import (
 	"strings"
 
 	"github.com/spf13/cobra"
+	githttp "gopkg.in/src-d/go-git.v4/plumbing/transport/http"
 
 	"github.com/philips/sget/autocert"
 	"github.com/philips/sget/gitcache"
@@ -127,13 +128,26 @@ func server(cmd *cobra.Command, args []string) {
 	pubgit := args[0]
 	privgit := args[1]
 
-	pubgc, err := gitcache.NewGitCache(pubgit, "public")
+	username := os.Getenv("GITHUB_USERNAME")
+	password := os.Getenv("GITHUB_PASSWORD")
+
+	if username == "" || password == "" {
+		fmt.Printf("environment variables GITHUB_USERNAME and GITHUB_PASSWORD must be set\n")
+		os.Exit(1)
+	}
+
+	auth := githttp.BasicAuth{
+		Username: username,
+		Password: password,
+	}
+
+	pubgc, err := gitcache.NewGitCache(pubgit, auth, "public")
 	if err != nil {
 		panic(err)
 	}
 	http.HandleFunc("/", sumRepo(*pubgc).handler)
 
-	privgc, err := gitcache.NewGitCache(privgit, "private")
+	privgc, err := gitcache.NewGitCache(privgit, auth, "private")
 	if err != nil {
 		panic(err)
 	}
