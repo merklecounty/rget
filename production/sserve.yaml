@@ -21,5 +21,15 @@ spec:
           value: "https://github.com/philips/releases-test"
         - name: PRIVATE_REPO
           value: "https://github.com/philips/sget-certificates"
+        - name: GITHUB_USERNAME
+          valueFrom:
+            secretKeyRef:
+              name: github
+              key: username
+        - name: GITHUB_PASSWORD
+          valueFrom:
+            secretKeyRef:
+              name: github
+              key: password
         command: ["/sget"]
         args: ["server", "$(PUBLIC_REPO)", "$(PRIVATE_REPO)"]
