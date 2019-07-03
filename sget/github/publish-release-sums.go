@@ -17,7 +17,7 @@ import (
 )
 
 var publishReleaseSumsCmd = &cobra.Command{
-	Use:   "publish-release-sums",
+	Use:   "publish-release-sums [github releases URL]",
 	Short: "Publish the release sums file for a release to a SHA256SUMS file",
 	Long: `
 `,

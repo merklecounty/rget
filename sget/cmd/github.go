@@ -16,7 +16,6 @@ package cmd
 
 import (
 	"github.com/spf13/cobra"
-	"github.com/spf13/viper"
 
 	"github.com/philips/sget/sget/github"
 )
@@ -33,16 +32,4 @@ public
 func init() {
 	rootCmd.AddCommand(githubCmd)
 	github.AddCommands(githubCmd)
-
-	githubCmd.PersistentFlags().String("foo", "", "A help for foo")
-
-	githubCmd.PersistentFlags().StringP("owner", "o", "", "Repo owner name")
-	viper.BindPFlag("owner", githubCmd.PersistentFlags().Lookup("owner"))
-
-	githubCmd.PersistentFlags().StringP("repo", "r", "", "Repo name")
-	viper.BindPFlag("repo", githubCmd.PersistentFlags().Lookup("repo"))
-
-	githubCmd.PersistentFlags().StringP("tag", "t", "", "Release tag")
-	viper.BindPFlag("tag", githubCmd.PersistentFlags().Lookup("tag"))
-
 }
