@@ -1,4 +1,4 @@
-# rget - download URLs and verify the contents against a public recorded cryptographic log
+# rget
 
 **Alpha Warning**: rget works as described but has minimal testing, no peer review, and no load testing. Please test the tool and provide feedback.
 
