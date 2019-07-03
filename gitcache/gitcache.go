@@ -50,8 +50,7 @@ func prefix(dir autocert.DirCache, prefix string) (matches []string, err error) 
 
 func NewGitCache(url string, auth githttp.BasicAuth, dir string) (*GitCache, error) {
 	gc := GitCache{
-		dir: autocert.DirCache(dir),
-		// TODO(philips): take a parameter
+		dir:  autocert.DirCache(dir),
 		auth: auth,
 	}
 
@@ -135,8 +134,8 @@ func (g GitCache) Put(ctx context.Context, name string, data []byte) error {
 	// commit.
 	co, err := w.Commit(fmt.Sprintf("add: %v", name), &git.CommitOptions{
 		Author: &object.Signature{
-			Name:  "sget bot",
-			Email: "sget@ifup.org",
+			Name:  "Merkle County Recorder",
+			Email: "security@merklecounty.com",
 			When:  time.Now(),
 		},
 	})
