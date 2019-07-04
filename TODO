@@ -32,15 +32,18 @@ x Create subcommand to generate SHA256Sum for user to upload
 x Create URL guesser for SHA256Sum file
 x Generate CT URL based on the URL guess
 x Ensure embedded SCT check also checks CN
-- Have github subcommands take a URL not flags for project, org, tag
+x Have github subcommands take a URL not flags for project, org, tag
 
 # Public Release
-- Take github credentials via environment variables
-- Define roadmap for self-hosting
+x Take github credentials via environment variables
+- Add prometheus metrics exporting for GET requests and submission requests and hook up to stackdriver
+- Remove panic() from the entire codebase
+- File issues for creating a Trillian frontend
 - Define well-known URL for discovering domain for release discovery for a domain
 - Add log-search command that dumps URLs to various log search engines 
   - https://crt.sh/?Identity=%25.v2-0.releases-test.philips.github.com.established.ifup.org
   - https://transparencyreport.google.com/https/certificates?cert_search_auth=&cert_search_cert=&cert_search=include_expired:true;include_subdomains:true;domain:v2-0.releases-test.philips.github.com.established.ifup.org&lu=cert_search
+- Define roadmap for self-hosting
 
 ## PR+1 - All file GH Release Test
 
