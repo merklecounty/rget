@@ -160,7 +160,8 @@ func get(cmd *cobra.Command, args []string) {
 	// provided alongside on the connection along the way.
 	chain, valid, invalid, err = rgetct.GetAndCheckSiteChain(ctx, lf, cturl, ll, hc)
 	if err != nil {
-		panic(fmt.Sprintf("%s: failed to get cert chain: %v", cturl, err))
+		fmt.Printf("%s: failed to get cert chain: %v\n", cturl, err)
+		os.Exit(1)
 	}
 	fmt.Printf("Found %d external SCTs for %q, of which %d were validated\n", (valid + invalid), cturl, valid)
 	totalInvalid += invalid
@@ -173,7 +174,8 @@ func get(cmd *cobra.Command, args []string) {
 	// create download request
 	req, err := grab.NewRequest("", durl)
 	if err != nil {
-		panic(err)
+		fmt.Printf("failed to create grab request: %v\n", err)
+		os.Exit(1)
 	}
 	req.NoCreateDirectories = true
 
