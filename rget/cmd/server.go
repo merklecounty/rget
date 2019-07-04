@@ -200,7 +200,7 @@ func server(cmd *cobra.Command, args []string) {
 		Cache:      privgc,
 		Prompt:     autocert.AcceptTOS,
 		HostPolicy: hostPolicy,
-		Email:      "brandon@ifup.org",
+		Email:      "letsencrypt@merklecounty.com",
 	}
 	s := &http.Server{
 		Addr:      ":https",
