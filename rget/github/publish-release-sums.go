@@ -41,8 +41,8 @@ func publishReleaseSumsMain(cmd *cobra.Command, args []string) {
 	}
 
 	conf := &oauth2.Config{
-		ClientID:     "921edc6d2d9ca9630f89",
-		ClientSecret: "1bf951fdf61abcb311baa8eecc18afc49c85ab64",
+		ClientID:     "81b93ee2e0d70958d933",
+		ClientSecret: "86e236464cdb40b07b085ade131b41b156f29c62",
 		Scopes:       []string{"repo"},
 		Endpoint: oauth2.Endpoint{
 			AuthURL:  "https://github.com/login/oauth/authorize",
