@@ -36,8 +36,17 @@ x Have github subcommands take a URL not flags for project, org, tag
 
 # Public Release
 x Take github credentials via environment variables
+- Introduce rget check to check a URL works and when the certificate was issued, etc
+- Make the rget root command output more useful output
+  - SHA256SUMS file checked
+  - Date of the certificate issuance
+  - SCT checks succeeded and the logs used
+  - Logs checked and succeeded
+  - Any failed checks
+  - File progress if tty
 - Add prometheus metrics exporting for GET requests and submission requests and hook up to stackdriver
 - Remove panic() from the entire codebase
+- Submit returns URL for domain
 - File issues for creating a Trillian frontend
 - Define well-known URL for discovering domain for release discovery for a domain
 - Add log-search command that dumps URLs to various log search engines 
