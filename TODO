@@ -36,6 +36,8 @@ x Have github subcommands take a URL not flags for project, org, tag
 
 # Public Release
 x Take github credentials via environment variables
+- Submit automatically after github publish happens
+- Print out an rget command after submission for a user to test
 - Introduce rget check to check a URL works and when the certificate was issued, etc
 - Make the rget root command output more useful output
   - SHA256SUMS file checked
