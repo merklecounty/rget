@@ -12,6 +12,7 @@ import (
 	"github.com/spf13/cobra"
 	"golang.org/x/oauth2"
 
+	"github.com/merklecounty/rget/rgetgithub"
 	"github.com/merklecounty/rget/rgethash"
 	"github.com/merklecounty/rget/rgetwellknown"
 )
@@ -22,6 +23,10 @@ var publishReleaseSumsCmd = &cobra.Command{
 	Long: `
 `,
 	Run: publishReleaseSumsMain,
+}
+
+func init() {
+	publishReleaseSumsCmd.Flags().BoolP("dry-run", "d", false, "Do not upload file to GitHub")
 }
 
 func publishReleaseSumsMain(cmd *cobra.Command, args []string) {
@@ -50,12 +55,20 @@ func publishReleaseSumsMain(cmd *cobra.Command, args []string) {
 		},
 	}
 
-	tc, err := oauth2ns.AuthenticateUser(conf)
+	dryRun, err := cmd.Flags().GetBool("dry-run")
 	if err != nil {
-		log.Fatal(err)
+		panic(err)
 	}
 
-	client := github.NewClient(tc.Client)
+	client := github.NewClient(nil)
+
+	if !dryRun {
+		tc, err := oauth2ns.AuthenticateUser(conf)
+		if err != nil {
+			log.Fatal(err)
+		}
+		client = github.NewClient(tc.Client)
+	}
 
 	if m["tag"] != "" {
 		release, _, err := client.Repositories.GetReleaseByTag(ctx, m["org"], m["repo"], m["tag"])
@@ -75,13 +88,24 @@ func publishReleaseSumsMain(cmd *cobra.Command, args []string) {
 		}
 		urls.AddURL(*r.ZipballURL)
 		urls.AddURL(*r.TarballURL)
+
+		// Grab the git tag URLs
+		tu := rgetgithub.ArchiveURLs(m["org"], m["repo"], *r.TagName)
+		for _, t := range tu {
+			urls.AddURL(t)
+		}
+
 		sha256sumfile := urls.SHA256SumFile()
 
 		content := []byte(sha256sumfile)
-		uploadSums(client, m["org"], m["repo"], m["tag"], r, content)
-	}
 
-	fmt.Printf("Successfully uploaded https://github.com/%s/%s/releases/download/%s/SHA256SUMS\n", m["org"], m["repo"], m["tag"])
+		fmt.Printf("generated SHA256SUMS:\n\n%s\n", content)
+
+		if !dryRun {
+			uploadSums(client, m["org"], m["repo"], *r.TagName, r, content)
+			fmt.Printf("submit the uploaded SHA256SUMS to the public record by running:\n\nrget submit https://github.com/%s/%s/releases/download/%s/SHA256SUMS\n", m["org"], m["repo"], *r.TagName)
+		}
+	}
 
 }
 
