@@ -232,6 +232,8 @@ func get(cmd *cobra.Command, args []string) {
 			return mmErr
 		}
 
+		fmt.Printf("validated file sum: %x\n", fileSum)
+
 		req.SetChecksum(sha256.New(), fileSum, true)
 
 		return

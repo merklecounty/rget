@@ -38,15 +38,16 @@ x Have github subcommands take a URL not flags for project, org, tag
 x Take github credentials via environment variables
 x Submit automatically after github publish happens - printed out submit instead
 x Print out an rget command after submission for a user to test
+- Add prometheus metrics exporting for GET requests and submission requests and hook up to stackdriver
 - Introduce rget check to check a URL works and when the certificate was issued, etc
 - Make the rget root command output more useful output
-  - SHA256SUMS file checked
+  x SHA256SUMS file checked
+  x sum of the file
   - Date of the certificate issuance
-  - SCT checks succeeded and the logs used
-  - Logs checked and succeeded
+  x SCT checks succeeded and the logs used
+  x Logs checked and succeeded
   - Any failed checks
   - File progress if tty
-- Add prometheus metrics exporting for GET requests and submission requests and hook up to stackdriver
 - Remove panic() from the entire codebase
 - Submit returns URL for domain
 - File issues for creating a Trillian frontend
