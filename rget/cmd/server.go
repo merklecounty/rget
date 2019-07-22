@@ -63,6 +63,15 @@ func (r sumRepo) handler(resp http.ResponseWriter, req *http.Request) {
 	sumsURL := req.Form.Get("url")
 	fmt.Printf("submission: %v\n", sumsURL)
 
+	// ensure the URL is coming from a host we know how to generate a
+	// domain for by parsing it using the wellknown libraries
+	domain, err := rgetwellknown.Domain(sumsURL)
+	if err != nil {
+		fmt.Printf("wellknown domain error: %v\n", err)
+		resp.WriteHeader(http.StatusOK)
+		return
+	}
+
 	// Step 1: Download the SHA256SUMS that is correct for the URL
 	response, err := http.Get(sumsURL)
 	var sha256file []byte
@@ -106,12 +115,6 @@ func (r sumRepo) handler(resp http.ResponseWriter, req *http.Request) {
 	}
 
 	// Step 3. Create the Certificate object for the domain and save that as well
-	domain, err := rgetwellknown.Domain(sumsURL)
-	if err != nil {
-		fmt.Printf("wellknown domain error: %v\n", err)
-		resp.WriteHeader(http.StatusOK)
-		return
-	}
 	ctdomain := sums.Domain() + "." + domain
 	err = gc.Put(context.Background(), ctdomain, sha256file)
 	if err != nil {
