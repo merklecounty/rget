@@ -20,13 +20,16 @@ import (
 var publishReleaseSumsCmd = &cobra.Command{
 	Use:   "publish-release-sums [github releases URL]",
 	Short: "Publish the release sums file for a release to a SHA256SUMS file",
-	Long: `
+	Long: `For a given release download each asset, generate a cryptographic digest, 
+and upload a SHA256SUMS file to the assets of that release.
+
+To test out the command without uploading see the --dry-run flag.
 `,
 	Run: publishReleaseSumsMain,
 }
 
 func init() {
-	publishReleaseSumsCmd.Flags().BoolP("dry-run", "d", false, "Do not upload file to GitHub")
+	publishReleaseSumsCmd.Flags().BoolP("dry-run", "d", false, "Do not upload to GitHub")
 }
 
 func publishReleaseSumsMain(cmd *cobra.Command, args []string) {
