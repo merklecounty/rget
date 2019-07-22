@@ -17,11 +17,13 @@ package cmd
 import (
 	"context"
 	"crypto/sha256"
+	"errors"
 	"fmt"
 	"io"
 	"io/ioutil"
 	"net/http"
 	"os"
+	"strings"
 	"time"
 
 	homedir "github.com/mitchellh/go-homedir"
@@ -104,17 +106,35 @@ func initConfig() {
 	}
 }
 
+func validSCTs(valid, invalid int, cturl string, logs []loglist.Log) string {
+	var names []string
+	for _, l := range logs {
+		names = append(names, l.Description)
+	}
+	return fmt.Sprintf("validated %d/%d SCTs in logs %q ", valid, (valid + invalid), strings.Join(names, ", "))
+}
+
+func levelSCTs(valid, invalid int) (string, error) {
+	switch {
+	case valid != 0 && invalid == 0:
+		return "OK", nil
+	case valid == 0:
+		return "Error", errors.New("no valid SCTs")
+	default:
+		return "Warning", nil
+	}
+}
+
 func get(cmd *cobra.Command, args []string) {
 	var chain []*x509.Certificate
 	var valid, invalid int
-	var totalInvalid int
 
 	durl := args[0]
 
 	// Step 1: Download the SHA256SUMS that is correct for the URL
 	prefix, err := rgetwellknown.SumPrefix(durl)
 	sumsURL := prefix + "SHA256SUMS"
-	fmt.Printf("Downloading sums file: %v\n", sumsURL)
+	fmt.Printf("downloading sums: %v\n", sumsURL)
 	response, err := http.Get(sumsURL)
 	var sha256file []byte
 	if err != nil {
@@ -140,6 +160,8 @@ func get(cmd *cobra.Command, args []string) {
 	sums := rgethash.FromSHA256SumFile(string(sha256file))
 	cturl := "https://" + sums.Domain() + "." + domain + "." + rgetwellknown.PublicServiceHost
 
+	fmt.Printf("validating transparency URL: %v\n", cturl)
+
 	hc := &http.Client{Timeout: 30 * time.Second}
 	ctx := context.Background()
 	lf := ctutil.NewLogInfo
@@ -156,20 +178,20 @@ func get(cmd *cobra.Command, args []string) {
 		os.Exit(1)
 	}
 
-	// Get chain served online for TLS connection to site, and check any SCTs
-	// provided alongside on the connection along the way.
-	chain, valid, invalid, err = rgetct.GetAndCheckSiteChain(ctx, lf, cturl, ll, hc)
+	// _ to skip TLS extension SCTs, rget doesn't use those yet
+	chain, _, err = rgetct.GetSiteSCTs(ctx, cturl, hc)
 	if err != nil {
 		fmt.Printf("%s: failed to get cert chain: %v\n", cturl, err)
 		os.Exit(1)
 	}
-	fmt.Printf("Found %d external SCTs for %q, of which %d were validated\n", (valid + invalid), cturl, valid)
-	totalInvalid += invalid
 
-	// Check the chain for embedded SCTs.
-	valid, invalid = rgetct.CheckChain(ctx, lf, chain, ll, hc)
-	fmt.Printf("Found %d embedded SCTs for %q, of which %d were validated\n", (valid + invalid), domain, valid)
-	totalInvalid += invalid
+	// Check x509 chain SCTs
+	valid, invalid, logs := rgetct.CheckX509(ctx, lf, chain, ll, hc)
+	lvl, err := levelSCTs(valid, invalid)
+	fmt.Printf("%s: x509 SCTs: %s\n", lvl, validSCTs(valid, invalid, cturl, logs))
+	if err != nil {
+		os.Exit(1)
+	}
 
 	// create download request
 	req, err := grab.NewRequest("", durl)
