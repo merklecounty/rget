@@ -21,6 +21,7 @@ import (
 	"net/url"
 	"os"
 
+	"github.com/merklecounty/rget/rgetgithub"
 	"github.com/merklecounty/rget/rgetwellknown"
 	"github.com/spf13/cobra"
 )
@@ -54,4 +55,16 @@ func submit(cmd *cobra.Command, args []string) {
 		fmt.Printf("submit read response error: %v\n", err)
 		os.Exit(1)
 	}
+
+	// TODO(philips): create a rgetwellknown function to generate a "test URL"
+	m, err := rgetwellknown.GitHubMatches(args[0])
+	if err != nil {
+		fmt.Printf("unable to parse GitHub URL: %v\n", err)
+		os.Exit(1)
+	}
+
+	aurls := rgetgithub.ArchiveURLs(m["org"], m["repo"], m["tag"])
+
+	fmt.Printf("fetch a file for this submitted release by running:\n\n")
+	fmt.Printf("rget %s\n", aurls[0])
 }
