@@ -138,7 +138,7 @@ func get(cmd *cobra.Command, args []string) {
 	response, err := http.Get(sumsURL)
 	var sha256file []byte
 	if err != nil {
-		fmt.Printf("%s", err)
+		fmt.Printf("%s\n", err)
 		os.Exit(1)
 	} else {
 		var err error
