@@ -39,6 +39,7 @@ x Take github credentials via environment variables
 x Submit automatically after github publish happens - printed out submit instead
 x Print out an rget command after submission for a user to test
 - Add prometheus metrics exporting for GET requests and submission requests and hook up to stackdriver
+- Use a different path for submissions. probably /submit or something
 - Introduce rget check to check a URL works and when the certificate was issued, etc
 - Make the rget root command output more useful output
   x SHA256SUMS file checked
@@ -55,6 +56,8 @@ x Print out an rget command after submission for a user to test
 - Add log-search command that dumps URLs to various log search engines 
   - https://crt.sh/?Identity=%25.v2-0.releases-test.philips.github.com.established.ifup.org
   - https://transparencyreport.google.com/https/certificates?cert_search_auth=&cert_search_cert=&cert_search=include_expired:true;include_subdomains:true;domain:v2-0.releases-test.philips.github.com.established.ifup.org&lu=cert_search
+- Add a test script that tries a GitHub project without SHA256SUMS
+- Add test script that uses a self-signed TLS certificate not in the log
 - Define roadmap for self-hosting
 
 ## PR+1 - All file GH Release Test
