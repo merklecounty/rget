@@ -59,6 +59,7 @@ x Print out an rget command after submission for a user to test
 - Add a test script that tries a GitHub project without SHA256SUMS
 - Add test script that uses a self-signed TLS certificate not in the log
 - Define roadmap for self-hosting
+- Implement vanity import path https://sagikazarmark.hu/blog/vanity-import-paths-in-go/
 
 ## PR+1 - All file GH Release Test
 
