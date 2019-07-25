@@ -128,6 +128,10 @@ func (r sumRepo) handler(resp http.ResponseWriter, req *http.Request) {
 }
 
 func server(cmd *cobra.Command, args []string) {
+	if len(args) < 2 {
+		fmt.Printf("missing required arguments (public git URL, private git URL)\n")
+		os.Exit(1)
+	}
 	pubgit := args[0]
 	privgit := args[1]
 
