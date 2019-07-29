@@ -1,5 +1,8 @@
 # rget
 
+[![Go Report Card](https://goreportcard.com/badge/github.com/merklecounty/rget)](https://goreportcard.com/report/github.com/merklecounty/rget)
+[![Docker Repository on Quay](https://quay.io/repository/merklecounty/rget/status "Docker Repository on Quay")](https://quay.io/repository/merklecounty/rget)
+
 **Alpha Warning**: rget works as described but has minimal testing, no peer review, and no load testing. Please test the tool and provide feedback.
 
 `rget` downloads URLs and verifies the contents against a publicly recorded cryptographic log. The public log gives users of rget a number of useful properties:
