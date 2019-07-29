@@ -14,7 +14,7 @@ In practice the way the system works is a URL owner will publish the cryptograph
 
 Download the appropriate release from https://github.com/merklecounty/rget/releases and extract the archive
 
-## Usage
+## Example Usage
 
 Use rget to grab the source of a dummy project and verify that the contents are publicly recorded.
 
@@ -26,7 +26,7 @@ rget https://api.github.com/repos/philips/releases-test/zipball/v2.0
 
 ### GitHub Developer Usage
 
-Generate SHA256SUMS and upload to the GitHub releases page
+Generate SHA256SUMS for a GitHub release and upload to the GitHub releases page
 
 ```
 rget github publish-release-sums https://github.com/philips/releases-test/releases/tag/v2.0
@@ -62,3 +62,6 @@ rget server <public git repo> <private certificates git repo>
 
 - **Q**: What are examples of practical attacks this could mitigate?
 - **A**: A well known example is the Feb. 2016 attack on the Linux Mint project where an attacker replaced a version of a Linux Mint release with a new version that included a backdoor vulnerability. With luck this was detected and mitigated within a day, however, there are likely many projects that have been attacked in a similar way without catching the attack. Further, the project could not make a strong assurance to the community on how long they were vulnerable, only stating "As far as we know, the only compromised edition was Linux Mint 17.3 Cinnamon edition.". By ensuring the cryptographic digests of all releases end up in a publicly audited log the project could have stated exactly when the content changed and potentially used a Certificate Transparency monitor to get notified quickly once it happened.
+
+- **Q**: What happens if an attacker can modify SHA256SUMS files?
+- **A**: The modification will show up in the logs. As an example the v1.0 release of the philips/releases-test project was modified several times. And this appears in the log on both [crt.sh](https://crt.sh/?q=%.v1-0.releases-test.philips.github.com.recorder.merklecounty.com) and [Google's Transparency Report](https://transparencyreport.google.com/https/certificates?hl=en&cert_search_auth=&cert_search_cert=&cert_search=include_expired:false;include_subdomains:true;domain:v1-0.releases-test.philips.github.com.recorder.merklecounty.com&lu=cert_search)
