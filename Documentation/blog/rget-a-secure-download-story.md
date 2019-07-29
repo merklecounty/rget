@@ -54,6 +54,6 @@ Keep in touch with the project! Subscribe to the [email list](https://merklecoun
 
 If you are a software author please consider uploading SHA256SUMS for your files on GitHub. The rget command has an easy to use subcommand for adding these cryptographic digests to your existing releases. And if you already publish SHA256SUMS try out rget submit and get started today.
 
-If you are a user please consider asking projects you rely on to publish SHA256SUMS on their GitHub releases. There is a template you can copy and paste when emailing software authors or filing a GitHub issue.
+If you are a user please consider asking projects you rely on to publish SHA256SUMS on their GitHub releases. There is an issue [template you can copy and paste](https://github.com/merklecounty/rget/blob/master/Documentation/add-crypto-digests-please.md) when emailing software authors or filing a GitHub issue.
 
 This project is just getting started and there is a lot of work to do. We would love help creating well-known protocols so any website can use rget, add support to rget for other providers like Bitbucket/GitLab/etc, and add support for packaging formats like OCI containers.
