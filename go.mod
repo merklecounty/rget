@@ -3,11 +3,11 @@ module github.com/merklecounty/rget
 go 1.12
 
 require (
-	github.com/btcsuite/btcd v0.0.0-20190315201642-aa6e0f35703c // indirect
 	github.com/cavaliercoder/grab v2.0.0+incompatible
 	github.com/fatih/color v1.7.0 // indirect
 	github.com/golang/glog v0.0.0-20160126235308-23def4e6c14b
 	github.com/golang/mock v1.2.0 // indirect
+	github.com/golang/protobuf v1.3.1 // indirect
 	github.com/google/certificate-transparency-go v1.0.21
 	github.com/google/go-cmp v0.3.0 // indirect
 	github.com/google/go-github/v24 v24.0.1
@@ -15,21 +15,16 @@ require (
 	github.com/grpc-ecosystem/grpc-gateway v1.8.5 // indirect
 	github.com/hashicorp/golang-lru v0.5.1 // indirect
 	github.com/inconshreveable/mousetrap v1.0.0 // indirect
-	github.com/ipfs/go-ipfs-api v0.0.1
 	github.com/kylelemons/godebug v1.1.0 // indirect
 	github.com/mattn/go-colorable v0.1.2 // indirect
-	github.com/minio/sha256-simd v0.0.0-20190317211740-0d7ea3c244ee // indirect
 	github.com/mitchellh/go-homedir v1.1.0
-	github.com/mr-tron/base58 v1.1.1 // indirect
-	github.com/multiformats/go-multiaddr v0.0.2 // indirect
-	github.com/multiformats/go-multiaddr-dns v0.0.2 // indirect
 	github.com/nmrshll/oauth2-noserver v0.0.0-20190221200101-9bf017bef639
 	github.com/nmrshll/rndm-go v0.0.0-20170430161430-8da3024e53de // indirect
 	github.com/palantir/stacktrace v0.0.0-20161112013806-78658fd2d177 // indirect
-	github.com/prometheus/client_golang v1.0.0
 	github.com/skratchdot/open-golang v0.0.0-20190402232053-79abb63cd66e // indirect
 	github.com/spf13/cobra v0.0.3
 	github.com/spf13/viper v1.3.2
+	github.com/stretchr/testify v1.3.0 // indirect
 	go.opencensus.io v0.21.0 // indirect
 	golang.org/x/crypto v0.0.0-20190621222207-cc06ce4a13d4
 	golang.org/x/net v0.0.0-20190628185345-da137c7871d7
