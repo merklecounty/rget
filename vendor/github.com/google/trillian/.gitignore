@@ -5,6 +5,7 @@
 *.tfstate.backup
 *~
 /.idea
+/bazel-*
 /commit_log
 /coverage.txt
 /createtree
@@ -12,9 +13,11 @@
 /ct_server
 /dump_tree
 /etcdiscover
+/licenses
 /loglb
 /maphammer
 /mapreplay
+/mdmtest
 /protoc
 /trillian_log_server
 /trillian_log_signer

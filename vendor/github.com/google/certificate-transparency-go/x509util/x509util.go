@@ -85,7 +85,7 @@ func OIDInExtensions(oid asn1.ObjectIdentifier, extensions []pkix.Extension) (in
 }
 
 // String formatting for various X.509/ASN.1 types
-func bitStringToString(b asn1.BitString) string {
+func bitStringToString(b asn1.BitString) string { // nolint:deadcode,unused
 	result := hex.EncodeToString(b.Bytes)
 	bitsLeft := b.BitLength % 8
 	if bitsLeft != 0 {
@@ -112,14 +112,14 @@ func publicKeyAlgorithmToString(algo x509.PublicKeyAlgorithm) string {
 // after each set of count bytes, and with each new line prefixed with the
 // given prefix.
 func appendHexData(buf *bytes.Buffer, data []byte, count int, prefix string) {
-	for ii, byte := range data {
+	for ii, b := range data {
 		if ii%count == 0 {
 			if ii > 0 {
 				buf.WriteString("\n")
 			}
 			buf.WriteString(prefix)
 		}
-		buf.WriteString(fmt.Sprintf("%02x:", byte))
+		buf.WriteString(fmt.Sprintf("%02x:", b))
 	}
 }
 
@@ -139,7 +139,7 @@ func curveOIDToString(oid asn1.ObjectIdentifier) (t string, bitlen int) {
 	return fmt.Sprintf("%v", oid), -1
 }
 
-func publicKeyToString(algo x509.PublicKeyAlgorithm, pub interface{}) string {
+func publicKeyToString(_ x509.PublicKeyAlgorithm, pub interface{}) string {
 	var buf bytes.Buffer
 	switch pub := pub.(type) {
 	case *rsa.PublicKey:
@@ -252,7 +252,7 @@ func extKeyUsageToString(u x509.ExtKeyUsage) string {
 	}
 }
 
-func attributeOIDToString(oid asn1.ObjectIdentifier) string {
+func attributeOIDToString(oid asn1.ObjectIdentifier) string { // nolint:deadcode,unused
 	switch {
 	case oid.Equal(pkix.OIDCountry):
 		return "Country"
@@ -405,7 +405,7 @@ func CertificateToString(cert *x509.Certificate) string {
 	result.WriteString(fmt.Sprintf("Certificate:\n"))
 	result.WriteString(fmt.Sprintf("    Data:\n"))
 	result.WriteString(fmt.Sprintf("        Version: %d (%#x)\n", cert.Version, cert.Version-1))
-	result.WriteString(fmt.Sprintf("        Serial Number: %d (%#[1]x)\n", cert.SerialNumber))
+	result.WriteString(fmt.Sprintf("        Serial Number: %s (0x%s)\n", cert.SerialNumber.Text(10), cert.SerialNumber.Text(16)))
 	result.WriteString(fmt.Sprintf("    Signature Algorithm: %v\n", cert.SignatureAlgorithm))
 	result.WriteString(fmt.Sprintf("        Issuer: %v\n", NameToString(cert.Issuer)))
 	result.WriteString(fmt.Sprintf("        Validity:\n"))
@@ -748,7 +748,6 @@ func showCTLogSTHInfo(result *bytes.Buffer, cert *x509.Certificate) {
 		appendHexData(result, sthInfo.SHA256RootHash[:], 16, "                    ")
 		result.WriteString("\n")
 		result.WriteString(fmt.Sprintf("              TreeHeadSignature: %s\n", sthInfo.TreeHeadSignature.Algorithm))
-		result.WriteString(fmt.Sprintf("              TreeHeadSignature:\n"))
 		appendHexData(result, sthInfo.TreeHeadSignature.Signature, 16, "                    ")
 		result.WriteString("\n")
 	}
@@ -860,6 +859,24 @@ func ExtractSCT(sctData *x509.SerializedSCT) (*ct.SignedCertificateTimestamp, er
 		return nil, fmt.Errorf("extra data (%d bytes) after serialized SCT", len(rest))
 	}
 	return &sct, nil
+}
+
+// MarshalSCTsIntoSCTList serializes SCTs into SCT list.
+func MarshalSCTsIntoSCTList(scts []*ct.SignedCertificateTimestamp) (*x509.SignedCertificateTimestampList, error) {
+	var sctList x509.SignedCertificateTimestampList
+	sctList.SCTList = []x509.SerializedSCT{}
+	for i, sct := range scts {
+		if sct == nil {
+			return nil, fmt.Errorf("SCT number %d is nil", i)
+		}
+		encd, err := tls.Marshal(sct)
+		if err != nil {
+			return nil, fmt.Errorf("error serializing SCT number %d: %s", i, err)
+		}
+		sctData := x509.SerializedSCT{Val: encd}
+		sctList.SCTList = append(sctList.SCTList, sctData)
+	}
+	return &sctList, nil
 }
 
 var pemCertificatePrefix = []byte("-----BEGIN CERTIFICATE")

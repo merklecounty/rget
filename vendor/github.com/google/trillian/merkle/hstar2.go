@@ -57,7 +57,7 @@ func NewHStar2(treeID int64, hasher hashers.MapHasher) HStar2 {
 
 // HStar2Root calculates the root of a sparse Merkle tree of a given depth
 // which contains the given set of non-null leaves.
-func (s *HStar2) HStar2Root(depth int, values []HStar2LeafHash) ([]byte, error) {
+func (s *HStar2) HStar2Root(depth int, values []*HStar2LeafHash) ([]byte, error) {
 	sort.Sort(ByIndex{values})
 	return s.hStar2b(0, depth, values, smtZero, nil, nil)
 }
@@ -75,7 +75,7 @@ type SparseSetNodeFunc func(depth int, index *big.Int, hash []byte) error
 //
 // prefix is the location of this subtree within the larger tree. Root is at nil.
 // subtreeDepth is the number of levels in this subtree.
-func (s *HStar2) HStar2Nodes(prefix []byte, subtreeDepth int, values []HStar2LeafHash,
+func (s *HStar2) HStar2Nodes(prefix []byte, subtreeDepth int, values []*HStar2LeafHash,
 	get SparseGetNodeFunc, set SparseSetNodeFunc) ([]byte, error) {
 	if glog.V(3) {
 		glog.Infof("HStar2Nodes(%x, %v, %v)", prefix, subtreeDepth, len(values))
@@ -89,12 +89,12 @@ func (s *HStar2) HStar2Nodes(prefix []byte, subtreeDepth int, values []HStar2Lea
 		return nil, ErrSubtreeOverrun
 	}
 	sort.Sort(ByIndex{values})
-	offset := storage.NewNodeIDFromPrefixSuffix(prefix, storage.Suffix{}, s.hasher.BitLen()).BigInt()
+	offset := storage.NewNodeIDFromPrefixSuffix(prefix, storage.EmptySuffix, s.hasher.BitLen()).BigInt()
 	return s.hStar2b(depth, totalDepth, values, offset, get, set)
 }
 
 // hStar2b computes a sparse Merkle tree root value recursively.
-func (s *HStar2) hStar2b(depth, maxDepth int, values []HStar2LeafHash, offset *big.Int,
+func (s *HStar2) hStar2b(depth, maxDepth int, values []*HStar2LeafHash, offset *big.Int,
 	get SparseGetNodeFunc, set SparseSetNodeFunc) ([]byte, error) {
 	if depth == maxDepth {
 		switch {
@@ -124,7 +124,9 @@ func (s *HStar2) hStar2b(depth, maxDepth int, values []HStar2LeafHash, offset *b
 		return nil, err
 	}
 	h := s.hasher.HashChildren(lhs, rhs)
-	s.set(offset, depth, h, set)
+	if err := s.set(offset, depth, h, set); err != nil {
+		return nil, err
+	}
 	return h, nil
 }
 
@@ -158,7 +160,7 @@ func (s *HStar2) set(index *big.Int, depth int, hash []byte, setter SparseSetNod
 // HStar2LeafHash sorting boilerplate below.
 
 // Leaves is a slice of HStar2LeafHash
-type Leaves []HStar2LeafHash
+type Leaves []*HStar2LeafHash
 
 // Len returns the number of leaves.
 func (s Leaves) Len() int { return len(s) }

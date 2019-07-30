@@ -37,6 +37,8 @@ const (
 	LogListURL = "https://www.gstatic.com/ct/log_list/log_list.json"
 	// LogListSignatureURL has the URL for the signature over Google Chrome's log list.
 	LogListSignatureURL = "https://www.gstatic.com/ct/log_list/log_list.sig"
+	// AllLogListURL has the URL for the list of all known logs (which isn't signed).
+	AllLogListURL = "https://www.gstatic.com/ct/log_list/all_logs_list.json"
 )
 
 // Manually mapped from https://www.gstatic.com/ct/log_list/log_list_schema.json
@@ -73,6 +75,12 @@ type STH struct {
 	TreeHeadSignature []byte `json:"tree_head_signature"`
 }
 
+// GoogleOperated returns whether Log is operated by Google. Rough logic.
+func (l *Log) GoogleOperated() bool {
+	lowerDesc := strings.ToLower(l.Description)
+	return strings.Contains(lowerDesc, "google")
+}
+
 // NewFromJSON creates a LogList from JSON encoded data.
 func NewFromJSON(llData []byte) (*LogList, error) {
 	var ll LogList
@@ -86,14 +94,14 @@ func NewFromJSON(llData []byte) (*LogList, error) {
 // signature along the way. The signature data should be provided as the
 // raw signature data.
 func NewFromSignedJSON(llData, rawSig []byte, pubKey crypto.PublicKey) (*LogList, error) {
-	sigAlgo := tls.Anonymous
+	var sigAlgo tls.SignatureAlgorithm
 	switch pkType := pubKey.(type) {
 	case *rsa.PublicKey:
 		sigAlgo = tls.RSA
 	case *ecdsa.PublicKey:
 		sigAlgo = tls.ECDSA
 	default:
-		return nil, fmt.Errorf("Unsupported public key type %v", pkType)
+		return nil, fmt.Errorf("unsupported public key type %v", pkType)
 	}
 	tlsSig := tls.DigitallySigned{
 		Algorithm: tls.SignatureAndHashAlgorithm{
@@ -106,6 +114,15 @@ func NewFromSignedJSON(llData, rawSig []byte, pubKey crypto.PublicKey) (*LogList
 		return nil, fmt.Errorf("failed to verify signature: %v", err)
 	}
 	return NewFromJSON(llData)
+}
+
+// OperatorIDSet is a helper op, creates set of operators for LogList.
+func (ll *LogList) OperatorIDSet() map[int]string {
+	ops := make(map[int]string)
+	for _, op := range ll.Operators {
+		ops[op.ID] = op.Name
+	}
+	return ops
 }
 
 // FindLogByName returns all logs whose names contain the given string.

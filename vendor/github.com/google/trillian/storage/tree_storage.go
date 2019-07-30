@@ -31,10 +31,10 @@ type ReadOnlyTreeTX interface {
 
 	// ReadRevision returns the tree revision that was current at the time this
 	// transaction was started.
-	ReadRevision() int64
+	ReadRevision(ctx context.Context) (int64, error)
 
 	// Commit attempts to commit any reads performed under this transaction.
-	Commit() error
+	Commit(context.Context) error
 
 	// Rollback aborts this transaction.
 	Rollback() error
@@ -42,7 +42,7 @@ type ReadOnlyTreeTX interface {
 	// Close attempts to Rollback the TX if it's open, it's a noop otherwise.
 	Close() error
 
-	// Open indicates if this transaction is open. An open transaction is one for which
+	// IsOpen indicates if this transaction is open. An open transaction is one for which
 	// Commit() or Rollback() has never been called. Implementations must do all clean up
 	// in these methods so transactions are assumed closed regardless of the reported success.
 	IsOpen() bool
@@ -65,7 +65,7 @@ type TreeWriter interface {
 	SetMerkleNodes(ctx context.Context, nodes []Node) error
 
 	// WriteRevision returns the tree revision that any writes through this TreeTX will be stored at.
-	WriteRevision() int64
+	WriteRevision(ctx context.Context) (int64, error)
 }
 
 // DatabaseChecker performs connectivity checks on the database.
@@ -77,6 +77,7 @@ type DatabaseChecker interface {
 // NodeReader provides read-only access to the stored tree nodes, as an interface to allow easier
 // testing of node manipulation.
 type NodeReader interface {
-	// GetMerkleNodes looks up the set of nodes identified by ids, at treeRevision, and returns them.
+	// GetMerkleNodes looks up the set of nodes identified by ids, at
+	// treeRevision, and returns them in the same order.
 	GetMerkleNodes(ctx context.Context, treeRevision int64, ids []NodeID) ([]Node, error)
 }

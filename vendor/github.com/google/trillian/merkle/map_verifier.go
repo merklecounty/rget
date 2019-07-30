@@ -18,6 +18,7 @@ import (
 	"bytes"
 	"fmt"
 
+	"github.com/google/trillian"
 	"github.com/google/trillian/merkle/hashers"
 	"github.com/google/trillian/storage"
 )
@@ -29,8 +30,8 @@ import (
 // append-only logs, but adds support for nil/"default" proof nodes.
 //
 // Returns nil on a successful verification, and an error otherwise.
-func VerifyMapInclusionProof(treeID int64, index, leaf, expectedRoot []byte, proof [][]byte, h hashers.MapHasher) error {
-	if got, want := len(index)*8, h.BitLen(); got != want {
+func VerifyMapInclusionProof(treeID int64, leaf *trillian.MapLeaf, expectedRoot []byte, proof [][]byte, h hashers.MapHasher) error {
+	if got, want := len(leaf.Index)*8, h.BitLen(); got != want {
 		return fmt.Errorf("index len: %d, want %d", got, want)
 	}
 	if got, want := len(proof), h.BitLen(); got != want {
@@ -42,16 +43,15 @@ func VerifyMapInclusionProof(treeID int64, index, leaf, expectedRoot []byte, pro
 		}
 	}
 
-	var runningHash []byte
-	if len(leaf) != 0 {
-		leafHash, err := h.HashLeaf(treeID, index, leaf)
-		if err != nil {
-			return fmt.Errorf("HashLeaf(): %v", err)
-		}
-		runningHash = leafHash
+	leafHash := h.HashLeaf(treeID, leaf.Index, leaf.LeafValue)
+	if len(leaf.LeafValue) == 0 && len(leaf.LeafHash) == 0 {
+		// This is an empty value that has never been set, and so has a LeafHash of nil
+		// (indicating that the effective hash value is h.HashEmpty(index, 0)).
+		leafHash = nil
 	}
 
-	nID := storage.NewNodeIDFromHash(index)
+	runningHash := leafHash
+	nID := storage.NewNodeIDFromHash(leaf.Index)
 	for height, sib := range nID.Siblings() {
 		pElement := proof[height]
 
@@ -67,7 +67,7 @@ func VerifyMapInclusionProof(treeID int64, index, leaf, expectedRoot []byte, pro
 		// for the branch that we are on before combining it with the neighbor.
 		if len(runningHash) == 0 && len(pElement) != 0 {
 			depth := nID.PrefixLenBits - height
-			emptyBranch := nID.Copy().MaskLeft(depth)
+			emptyBranch := nID.MaskLeft(depth)
 			runningHash = h.HashEmpty(treeID, emptyBranch.Path, height)
 		}
 
@@ -83,12 +83,12 @@ func VerifyMapInclusionProof(treeID int64, index, leaf, expectedRoot []byte, pro
 	}
 	if len(runningHash) == 0 {
 		depth := 0
-		emptyBranch := nID.Copy().MaskLeft(depth)
+		emptyBranch := nID.MaskLeft(depth)
 		runningHash = h.HashEmpty(treeID, emptyBranch.Path, h.BitLen())
 	}
 
 	if got, want := runningHash, expectedRoot; !bytes.Equal(got, want) {
-		return fmt.Errorf("calculated root: %x, want \n%x", got, want)
+		return fmt.Errorf("calculated root: %x, want: %x", got, want)
 	}
 	return nil
 }
