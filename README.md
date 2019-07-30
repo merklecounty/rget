@@ -13,7 +13,9 @@
 
 In practice the way the system works is a URL owner will publish the cryptographic digests at a URL adjacent to the content a `rget` user is downloading. The `rget` tool will download the digest and verify this digest appears in the Certificate Transparency log via a specially crafted DNS name.
 
-Learn more and stay up to date with the [project blog and newsletter](https://merklecounty.substack.com/).
+Learn more and stay up to date with the [project blog and newsletter](https://merklecounty.substack.com/). Checkout some of the blog posts:
+
+- [rget: a secure download user story](https://merklecounty.substack.com/p/rget-a-secure-download-user-story)
 
 ## Installation
 
