@@ -4,7 +4,9 @@ FROM golang:1.12 as build
 WORKDIR /go/src/github.com/merklecounty/rget
 COPY . .
 
-RUN go get -d -v ./...
+ENV GO111MODULE=on
+ENV GOFLAGS=-mod=vendor
+
 RUN go test -v ./...
 RUN go install -v ./...
 
