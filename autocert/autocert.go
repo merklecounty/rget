@@ -58,7 +58,7 @@ func AcceptTOS(tosURL string) bool { return true }
 // It returns a non-nil error if the host should be rejected.
 // The returned error is accessible via tls.Conn.Handshake and its callers.
 // See Manager's HostPolicy field and GetCertificate method docs for more details.
-type HostPolicy func(ctx context.Context, host string) ([]string, error)
+type HostPolicy func(ctx context.Context, host string) (Policy, error)
 
 // HostWhitelist returns a policy where only the specified host names are allowed.
 // Only exact matches are currently supported. Subdomains, regexp or wildcard
@@ -74,17 +74,22 @@ func HostWhitelist(hosts ...string) HostPolicy {
 			whitelist[h] = true
 		}
 	}
-	return func(_ context.Context, host string) ([]string, error) {
+	return func(_ context.Context, host string) (Policy, error) {
 		if !whitelist[host] {
-			return []string{}, fmt.Errorf("acme/autocert: host %q not configured in HostWhitelist", host)
+			return Policy{}, fmt.Errorf("acme/autocert: host %q not configured in HostWhitelist", host)
 		}
-		return []string{host}, nil
+		return Policy{CommonName: host}, nil
 	}
 }
 
+type Policy struct {
+	CommonName string
+	DNSNames   []string
+}
+
 // defaultHostPolicy is used when Manager.HostPolicy is not set.
-func defaultHostPolicy(_ context.Context, host string) ([]string, error) {
-	return []string{host}, nil
+func defaultHostPolicy(_ context.Context, host string) (Policy, error) {
+	return Policy{CommonName: host}, nil
 }
 
 // Manager is a stateful certificate manager built on top of acme.Client.
@@ -270,7 +275,7 @@ func (m *Manager) GetCertificate(hello *tls.ClientHelloInfo) (*tls.Certificate, 
 	defer cancel()
 
 	// get the sans for this hostname and validate it is OK
-	san, err := m.hostPolicy()(ctx, strings.TrimSuffix(name, "."))
+	policy, err := m.hostPolicy()(ctx, strings.TrimSuffix(name, "."))
 	if err != nil {
 		return nil, err
 	}
@@ -292,9 +297,6 @@ func (m *Manager) GetCertificate(hello *tls.ClientHelloInfo) (*tls.Certificate, 
 		return nil, fmt.Errorf("acme/autocert: no token cert for %q", name)
 	}
 
-	// from here on out the name should only be the CN
-	name = san[0]
-
 	// regular domain
 	ck := certKey{
 		domain: strings.TrimSuffix(name, "."), // golang.org/issue/18114
@@ -308,7 +310,7 @@ func (m *Manager) GetCertificate(hello *tls.ClientHelloInfo) (*tls.Certificate, 
 		return nil, err
 	}
 
-	cert, err = m.createCert(ctx, ck, san)
+	cert, err = m.createCert(ctx, ck, policy.DNSNames)
 	if err != nil {
 		return nil, err
 	}
@@ -656,6 +658,10 @@ func (m *Manager) certState(ck certKey) (*certState, error) {
 func (m *Manager) authorizedCert(ctx context.Context, key crypto.Signer, ck certKey, san []string) (der [][]byte, leaf *x509.Certificate, err error) {
 	client, err := m.acmeClient(ctx)
 	if err != nil {
+		return nil, nil, err
+	}
+
+	if err := m.verify(ctx, client, ck.domain); err != nil {
 		return nil, nil, err
 	}
 

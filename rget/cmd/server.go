@@ -100,19 +100,6 @@ func (r sumRepo) handler(resp http.ResponseWriter, req *http.Request) {
 		resp.WriteHeader(http.StatusOK)
 		return
 	}
-	err = gc.Put(context.Background(), sums.ShortDomain(), sha256file)
-	if err != nil {
-		fmt.Printf("git put error: %v\n", err)
-		http.Error(resp, "internal service error", http.StatusInternalServerError)
-		return
-	}
-
-	err = gc.Put(context.Background(), sums.Domain(), sha256file)
-	if err != nil {
-		fmt.Printf("git put error: %v\n", err)
-		http.Error(resp, "internal service error", http.StatusInternalServerError)
-		return
-	}
 
 	// Step 3. Create the Certificate object for the domain and save that as well
 	ctdomain := sums.Domain() + "." + domain
@@ -159,13 +146,13 @@ func server(cmd *cobra.Command, args []string) {
 		panic(err)
 	}
 
-	hostPolicyNoLog := func(ctx context.Context, host string) ([]string, error) {
+	hostPolicyNoLog := func(ctx context.Context, host string) (autocert.Policy, error) {
 		if rgetwellknown.PublicServiceHost == host {
-			return []string{host}, nil
+			return autocert.Policy{CommonName: host}, nil
 		}
 
 		if !strings.HasSuffix(host, "."+rgetwellknown.PublicServiceHost) {
-			return nil, fmt.Errorf("not in TLD %v", rgetwellknown.PublicServiceHost)
+			return autocert.Policy{}, fmt.Errorf("not in TLD %v", rgetwellknown.PublicServiceHost)
 		}
 
 		key := strings.TrimSuffix(host, "."+rgetwellknown.PublicServiceHost)
@@ -173,34 +160,44 @@ func server(cmd *cobra.Command, args []string) {
 		// Reduce to the shortest domain
 		parts := strings.Split(key, ".")
 		if len(parts) == 0 {
-			return nil, errors.New("common name empty")
+			return autocert.Policy{}, errors.New("common name empty")
 		}
 		key = parts[0]
 
-		_, err := pubgc.Get(ctx, key)
+		matches, err := pubgc.Prefix(ctx, key)
+		if err != nil {
+			return autocert.Policy{}, err
+		}
+
+		if len(matches) != 1 {
+			fmt.Printf("unknown merkle prefix %v for %v\n", key, host)
+		}
+
+		content, err := pubgc.Get(ctx, matches[0])
 		if err != nil {
 			fmt.Printf("unknown merkle prefix %v for %v\n", key, host)
 			// TODO(philips): leak a nicer error
-			return nil, err
+			return autocert.Policy{}, err
 		}
 
-		matches, err := pubgc.Prefix(ctx, key)
-		if err != nil {
-			return nil, err
+		sums := rgethash.FromSHA256SumFile(string(content))
+
+		p := autocert.Policy{
+			CommonName: sums.ShortDomain() + "." + rgetwellknown.PublicServiceHost,
+			DNSNames: []string{
+				matches[1] + "." + rgetwellknown.PublicServiceHost,
+				sums.Domain() + "." + rgetwellknown.PublicServiceHost,
+			},
 		}
 
-		for i := range matches {
-			matches[i] = matches[i] + "." + rgetwellknown.PublicServiceHost
-		}
-
-		return matches, nil
+		return p, nil
 	}
 
-	hostPolicy := func(ctx context.Context, host string) ([]string, error) {
+	hostPolicy := func(ctx context.Context, host string) (autocert.Policy, error) {
 		fmt.Printf("hostPolicy called %v\n", host)
-		sans, err := hostPolicyNoLog(ctx, host)
+		policy, err := hostPolicyNoLog(ctx, host)
 		fmt.Printf("hostPolicy err %v\n", err)
-		return sans, err
+		return policy, err
 	}
 
 	m := &autocert.Manager{
