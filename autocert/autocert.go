@@ -280,6 +280,8 @@ func (m *Manager) GetCertificate(hello *tls.ClientHelloInfo) (*tls.Certificate, 
 		return nil, err
 	}
 
+	name = policy.CommonName
+
 	// Check whether this is a token cert requested for TLS-SNI or TLS-ALPN challenge.
 	if wantsTokenCert(hello) {
 		m.tokensMu.RLock()
