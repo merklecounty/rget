@@ -135,13 +135,13 @@ func server(cmd *cobra.Command, args []string) {
 		Password: password,
 	}
 
-	pubgc, err := gitcache.NewGitCache(pubgit, auth, "public")
+	pubgc, err := gitcache.NewGitCache(pubgit, &auth, "public")
 	if err != nil {
 		panic(err)
 	}
 	http.HandleFunc("/", sumRepo(*pubgc).handler)
 
-	privgc, err := gitcache.NewGitCache(privgit, auth, "private")
+	privgc, err := gitcache.NewGitCache(privgit, &auth, "private")
 	if err != nil {
 		panic(err)
 	}

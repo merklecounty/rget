@@ -11,7 +11,7 @@ import (
 
 	"gopkg.in/src-d/go-git.v4"
 	"gopkg.in/src-d/go-git.v4/plumbing/object"
-	githttp "gopkg.in/src-d/go-git.v4/plumbing/transport/http"
+	"gopkg.in/src-d/go-git.v4/plumbing/transport"
 
 	"github.com/merklecounty/rget/autocert"
 )
@@ -19,7 +19,7 @@ import (
 type GitCache struct {
 	dir  autocert.DirCache
 	repo git.Repository
-	auth githttp.BasicAuth
+	auth transport.AuthMethod
 }
 
 func prefix(dir autocert.DirCache, prefix string) (matches []string, err error) {
@@ -48,7 +48,7 @@ func prefix(dir autocert.DirCache, prefix string) (matches []string, err error) 
 	return
 }
 
-func NewGitCache(url string, auth githttp.BasicAuth, dir string) (*GitCache, error) {
+func NewGitCache(url string, auth transport.AuthMethod, dir string) (*GitCache, error) {
 	gc := GitCache{
 		dir:  autocert.DirCache(dir),
 		auth: auth,
@@ -57,7 +57,7 @@ func NewGitCache(url string, auth githttp.BasicAuth, dir string) (*GitCache, err
 	if _, err := os.Stat(dir); os.IsNotExist(err) {
 		fmt.Printf("git clone %s %s --recursive\n", url, dir)
 		r, err := git.PlainClone(dir, false, &git.CloneOptions{
-			Auth:              &gc.auth,
+			Auth:              gc.auth,
 			URL:               url,
 			RecurseSubmodules: git.DefaultSubmoduleRecursionDepth,
 		})
@@ -151,7 +151,7 @@ func (g GitCache) Put(ctx context.Context, name string, data []byte) error {
 	fmt.Printf("git push\n")
 	// push using default options
 	err = g.repo.Push(&git.PushOptions{
-		Auth: &g.auth,
+		Auth: g.auth,
 	})
 	if err != nil {
 		return err
