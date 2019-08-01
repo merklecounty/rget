@@ -161,8 +161,6 @@ func HostPolicyFunc(pubgc *gitcache.GitCache) autocert.HostPolicy {
 			return autocert.Policy{}, err
 		}
 
-		fmt.Printf("%v %v\n", matches, len(matches))
-
 		if len(matches) != 1 {
 			return autocert.Policy{}, ErrUnknownMerklePrefix
 		}

@@ -93,24 +93,36 @@ func TestHostPolicy(t *testing.T) {
 	ctx := context.Background()
 
 	for ti, tt := range testCases {
+		hosts := []string{
+			tt.input,
+		}
+
 		if tt.put {
 			if err := gc.Put(ctx, tt.input, tt.value); err != nil {
 				t.Errorf("%d: put domain %v: %v", ti, tt.input, err)
 			}
 		}
 
-		p, err := hp(ctx, tt.input+"."+rgetwellknown.PublicServiceHost)
-		switch {
-		case err != tt.wantErr:
-			t.Fatalf("%d: want %v got %v %v", ti, tt.wantErr, err, p)
-		case tt.wantErr != nil:
-			continue
-		case err != nil:
-			t.Errorf("%d: policy %v: %v", ti, tt.input, err)
+		for _, name := range tt.expect.DNSNames {
+			hosts = append(hosts, name)
 		}
 
-		if !reflect.DeepEqual(tt.expect, p) {
-			t.Errorf("%d: policies don't match want\n\t%v\n got\n\t%v\n", ti, tt.expect, p)
+		for _, name := range hosts {
+			fqdn := name + "." + rgetwellknown.PublicServiceHost
+			p, err := hp(ctx, fqdn)
+			switch {
+			case err != tt.wantErr:
+				t.Fatalf("%d: want %v got %v %v", ti, tt.wantErr, err, p)
+			case tt.wantErr != nil:
+				continue
+			case err != nil:
+				t.Errorf("%d: policy %v: %v", ti, fqdn, err)
+			}
+			if !reflect.DeepEqual(tt.expect, p) {
+				t.Errorf("%d: policies don't match want\n\t%v\n got\n\t%v\n", ti, tt.expect, p)
+			}
+
 		}
+
 	}
 }
