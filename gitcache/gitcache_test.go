@@ -9,7 +9,8 @@ import (
 	"testing"
 
 	"gopkg.in/src-d/go-git.v4"
-	"gopkg.in/src-d/go-git.v4/plumbing/object"
+
+	"github.com/merklecounty/rget/internal/testutil"
 )
 
 func TestPrefix(t *testing.T) {
@@ -25,34 +26,8 @@ func TestPrefix(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	r, err := git.PlainInit(url, false)
-	if err != nil {
-		t.Fatal(err)
-	}
+	testutil.EmptyGitRepo(t, url)
 
-	w, err := r.Worktree()
-	if err != nil {
-		t.Fatal(err)
-	}
-
-	err = ioutil.WriteFile(filepath.Join(url, "README"), []byte("Hello world"), 0755)
-	if err != nil {
-		t.Fatal(err)
-	}
-
-	_, err = w.Add("README")
-	if err != nil {
-		t.Fatal(err)
-	}
-
-	_, err = w.Commit("README\n", &git.CommitOptions{Author: &object.Signature{
-		Name: "Zohra",
-	}})
-	if err != nil {
-		t.Fatal(err)
-	}
-
-	println(url)
 	gc, err := NewGitCache(filepath.Join(url, git.GitDirName), nil, filepath.Join(dir, "cache"))
 	if err != nil {
 		t.Fatal(err)
@@ -73,5 +48,14 @@ func TestPrefix(t *testing.T) {
 
 	if !reflect.DeepEqual(matches, expected) {
 		t.Errorf("matches = %v; want %v", matches, expected)
+	}
+
+	matches, err = gc.Prefix(ctx, "woo")
+	if err != nil {
+		t.Fatalf("prefix: %v", err)
+	}
+
+	if len(matches) != 0 {
+		t.Fatalf("prefix returned non-zero list")
 	}
 }
