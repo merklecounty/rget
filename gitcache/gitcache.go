@@ -7,6 +7,7 @@ import (
 	"path/filepath"
 	"sort"
 	"strings"
+	"sync"
 	"time"
 
 	"gopkg.in/src-d/go-git.v4"
@@ -20,6 +21,8 @@ type GitCache struct {
 	dir  autocert.DirCache
 	repo git.Repository
 	auth transport.AuthMethod
+
+	mu sync.Mutex
 }
 
 func prefix(dir autocert.DirCache, prefix string) (matches []string, err error) {
@@ -95,9 +98,18 @@ func NewGitCache(url string, auth transport.AuthMethod, dir string) (*GitCache, 
 }
 
 func (g GitCache) Delete(ctx context.Context, name string) error {
-	err := g.dir.Delete(ctx, name)
+	g.mu.Lock()
+	defer g.mu.Unlock()
 
-	// TODO: do git stuff here
+	err := g.dir.Delete(ctx, name)
+	if err != nil {
+		return err
+	}
+
+	err = g.commit(ctx, name, "delete")
+	if err != nil {
+		return err
+	}
 
 	return err
 }
@@ -112,8 +124,23 @@ func (g GitCache) Get(ctx context.Context, name string) ([]byte, error) {
 }
 
 func (g GitCache) Put(ctx context.Context, name string, data []byte) error {
-	err := g.dir.Put(ctx, name, data)
+	g.mu.Lock()
+	defer g.mu.Unlock()
 
+	err := g.dir.Put(ctx, name, data)
+	if err != nil {
+		return err
+	}
+
+	err = g.commit(ctx, name, "put")
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
+
+func (g GitCache) commit(ctx context.Context, name, verb string) error {
 	w, err := g.repo.Worktree()
 	if err != nil {
 		return err
@@ -132,7 +159,7 @@ func (g GitCache) Put(ctx context.Context, name string, data []byte) error {
 	// Commits the current staging are to the repository, with the new file
 	// just created. We should provide the object.Signature of Author of the
 	// commit.
-	co, err := w.Commit(fmt.Sprintf("add: %v", name), &git.CommitOptions{
+	co, err := w.Commit(fmt.Sprintf("%v: %v", verb, name), &git.CommitOptions{
 		Author: &object.Signature{
 			Name:  "Merkle County Recorder",
 			Email: "security@merklecounty.com",

@@ -39,6 +39,12 @@ func TestPrefix(t *testing.T) {
 		if err := gc.Put(ctx, n, []byte{1}); err != nil {
 			t.Fatalf("put: %v", err)
 		}
+		if err := gc.Delete(ctx, n); err != nil {
+			t.Fatalf("delete: %v", err)
+		}
+		if err := gc.Put(ctx, n, []byte{1}); err != nil {
+			t.Fatalf("put: %v", err)
+		}
 	}
 
 	matches, err := gc.Prefix(ctx, "dummy")
