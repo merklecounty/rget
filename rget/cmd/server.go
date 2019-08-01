@@ -16,13 +16,11 @@ package cmd
 
 import (
 	"context"
-	"errors"
 	"fmt"
 	"io/ioutil"
 	"log"
 	"net/http"
 	"os"
-	"strings"
 
 	"github.com/spf13/cobra"
 	githttp "gopkg.in/src-d/go-git.v4/plumbing/transport/http"
@@ -146,64 +144,18 @@ func server(cmd *cobra.Command, args []string) {
 		panic(err)
 	}
 
-	hostPolicyNoLog := func(ctx context.Context, host string) (autocert.Policy, error) {
-		if rgetwellknown.PublicServiceHost == host {
-			return autocert.Policy{CommonName: host}, nil
-		}
+	hostPolicy := rgethash.HostPolicyFunc(pubgc)
 
-		if !strings.HasSuffix(host, "."+rgetwellknown.PublicServiceHost) {
-			return autocert.Policy{}, fmt.Errorf("not in TLD %v", rgetwellknown.PublicServiceHost)
-		}
-
-		key := strings.TrimSuffix(host, "."+rgetwellknown.PublicServiceHost)
-
-		// Reduce to the shortest domain
-		parts := strings.Split(key, ".")
-		if len(parts) == 0 {
-			return autocert.Policy{}, errors.New("common name empty")
-		}
-		key = parts[0]
-
-		matches, err := pubgc.Prefix(ctx, key)
-		if err != nil {
-			return autocert.Policy{}, err
-		}
-
-		if len(matches) != 1 {
-			fmt.Printf("unknown merkle prefix %v for %v\n", key, host)
-		}
-
-		content, err := pubgc.Get(ctx, matches[0])
-		if err != nil {
-			fmt.Printf("unknown merkle prefix %v for %v\n", key, host)
-			// TODO(philips): leak a nicer error
-			return autocert.Policy{}, err
-		}
-
-		sums := rgethash.FromSHA256SumFile(string(content))
-
-		p := autocert.Policy{
-			CommonName: sums.ShortDomain() + "." + rgetwellknown.PublicServiceHost,
-			DNSNames: []string{
-				matches[1] + "." + rgetwellknown.PublicServiceHost,
-				sums.Domain() + "." + rgetwellknown.PublicServiceHost,
-			},
-		}
-
-		return p, nil
-	}
-
-	hostPolicy := func(ctx context.Context, host string) (autocert.Policy, error) {
-		fmt.Printf("hostPolicy called %v\n", host)
-		policy, err := hostPolicyNoLog(ctx, host)
-		fmt.Printf("hostPolicy err %v\n", err)
+	hostPolicyLog := func(ctx context.Context, host string) (autocert.Policy, error) {
+		policy, err := hostPolicy(ctx, host)
+		fmt.Printf("hostPolicy: %v err: %v\n", policy, err)
 		return policy, err
 	}
 
 	m := &autocert.Manager{
 		Cache:      privgc,
 		Prompt:     autocert.AcceptTOS,
-		HostPolicy: hostPolicy,
+		HostPolicy: hostPolicyLog,
 		Email:      "letsencrypt@merklecounty.com",
 	}
 	s := &http.Server{

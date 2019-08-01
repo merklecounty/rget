@@ -15,6 +15,10 @@ import (
 	"github.com/google/trillian/merkle"
 	"github.com/google/trillian/merkle/rfc6962"
 	"golang.org/x/net/context/ctxhttp"
+
+	"github.com/merklecounty/rget/autocert"
+	"github.com/merklecounty/rget/gitcache"
+	"github.com/merklecounty/rget/rgetwellknown"
 )
 
 type URLSum struct {
@@ -119,4 +123,69 @@ func readerDigest(r io.Reader) (sum []byte, err error) {
 	sum = h.Sum(nil)
 
 	return sum, nil
+}
+
+var (
+	ErrCommonNameEmpty     error
+	ErrUnknownMerklePrefix error
+)
+
+func init() {
+	ErrCommonNameEmpty = fmt.Errorf("common name empty")
+	ErrUnknownMerklePrefix = fmt.Errorf("unknown merkle prefix")
+}
+
+// HostPolicyFunc returns a HostPolicy that returns Policies
+// based on Sums that exist in the GitCache repo
+func HostPolicyFunc(pubgc *gitcache.GitCache) autocert.HostPolicy {
+	hostPolicy := func(ctx context.Context, host string) (autocert.Policy, error) {
+		if rgetwellknown.PublicServiceHost == host {
+			return autocert.Policy{CommonName: host}, nil
+		}
+
+		if !strings.HasSuffix(host, "."+rgetwellknown.PublicServiceHost) {
+			return autocert.Policy{}, fmt.Errorf("not in TLD %v", rgetwellknown.PublicServiceHost)
+		}
+
+		key := strings.TrimSuffix(host, "."+rgetwellknown.PublicServiceHost)
+
+		// Reduce to the shortest domain
+		parts := strings.Split(key, ".")
+		if len(parts) == 0 {
+			return autocert.Policy{}, ErrCommonNameEmpty
+		}
+		key = parts[0]
+
+		matches, err := pubgc.Prefix(ctx, key)
+		if err != nil {
+			return autocert.Policy{}, err
+		}
+
+		fmt.Printf("%v %v\n", matches, len(matches))
+
+		if len(matches) != 1 {
+			return autocert.Policy{}, ErrUnknownMerklePrefix
+		}
+
+		content, err := pubgc.Get(ctx, matches[0])
+		if err != nil {
+			fmt.Printf("unknown merkle prefix %v for %v\n", key, host)
+			// TODO(philips): leak a nicer error
+			return autocert.Policy{}, err
+		}
+
+		sums := FromSHA256SumFile(string(content))
+
+		p := autocert.Policy{
+			CommonName: sums.ShortDomain() + "." + rgetwellknown.PublicServiceHost,
+			DNSNames: []string{
+				matches[0] + "." + rgetwellknown.PublicServiceHost,
+				sums.Domain() + "." + rgetwellknown.PublicServiceHost,
+			},
+		}
+
+		return p, nil
+	}
+
+	return hostPolicy
 }
