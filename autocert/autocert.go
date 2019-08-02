@@ -280,8 +280,6 @@ func (m *Manager) GetCertificate(hello *tls.ClientHelloInfo) (*tls.Certificate, 
 		return nil, err
 	}
 
-	name = policy.CommonName
-
 	// Check whether this is a token cert requested for TLS-SNI or TLS-ALPN challenge.
 	if wantsTokenCert(hello) {
 		m.tokensMu.RLock()
@@ -298,6 +296,9 @@ func (m *Manager) GetCertificate(hello *tls.ClientHelloInfo) (*tls.Certificate, 
 		// TODO: cache error results?
 		return nil, fmt.Errorf("acme/autocert: no token cert for %q", name)
 	}
+
+	// set the name after the ALPN challenge
+	name = policy.CommonName
 
 	// regular domain
 	ck := certKey{
