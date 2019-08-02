@@ -37,6 +37,7 @@ require (
 	github.com/nmrshll/oauth2-noserver v0.0.0-20190221200101-9bf017bef639
 	github.com/nmrshll/rndm-go v0.0.0-20170430161430-8da3024e53de // indirect
 	github.com/palantir/stacktrace v0.0.0-20161112013806-78658fd2d177 // indirect
+	github.com/prometheus/client_golang v1.0.0
 	github.com/rogpeppe/fastuuid v1.2.0 // indirect
 	github.com/shurcooL/go v0.0.0-20190704215121-7189cc372560 // indirect
 	github.com/skratchdot/open-golang v0.0.0-20190402232053-79abb63cd66e // indirect

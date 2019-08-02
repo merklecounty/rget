@@ -22,6 +22,9 @@ import (
 	"net/http"
 	"os"
 
+	"github.com/prometheus/client_golang/prometheus"
+	"github.com/prometheus/client_golang/prometheus/promauto"
+	"github.com/prometheus/client_golang/prometheus/promhttp"
 	"github.com/spf13/cobra"
 	githttp "gopkg.in/src-d/go-git.v4/plumbing/transport/http"
 
@@ -44,10 +47,20 @@ func init() {
 	rootCmd.AddCommand(serverCmd)
 }
 
-type sumRepo gitcache.GitCache
+type rgetServer struct {
+	*gitcache.GitCache
+	projReqs *prometheus.CounterVec
+}
 
-func (r sumRepo) handler(resp http.ResponseWriter, req *http.Request) {
+func (r rgetServer) handler(resp http.ResponseWriter, req *http.Request) {
 	if req.Method != "POST" {
+		domain, err := rgetwellknown.TrimDigestDomain(req.Host)
+		if err != nil {
+			fmt.Printf("request for unknown host %v unable to parse: %v\n", req.Host, err)
+		}
+		if len(domain) > 0 {
+			r.projReqs.WithLabelValues(req.Method, domain).Inc()
+		}
 		http.Error(resp, "only POST is supported", http.StatusBadRequest)
 		return
 	}
@@ -70,6 +83,8 @@ func (r sumRepo) handler(resp http.ResponseWriter, req *http.Request) {
 		return
 	}
 
+	r.projReqs.WithLabelValues(req.Method, domain).Inc()
+
 	// Step 1: Download the SHA256SUMS that is correct for the URL
 	response, err := http.Get(sumsURL)
 	var sha256file []byte
@@ -89,9 +104,7 @@ func (r sumRepo) handler(resp http.ResponseWriter, req *http.Request) {
 	sums := rgethash.FromSHA256SumFile(string(sha256file))
 
 	// Step 2: Save the file contents to the git repo by domain
-	gc := gitcache.GitCache(r)
-
-	_, err = gc.Get(context.Background(), sums.Domain())
+	_, err = r.GitCache.Get(context.Background(), sums.Domain())
 	if err == nil {
 		// TODO(philips): add rate limiting and DDoS protections here
 		fmt.Printf("cache hit: %v\n", sumsURL)
@@ -101,7 +114,7 @@ func (r sumRepo) handler(resp http.ResponseWriter, req *http.Request) {
 
 	// Step 3. Create the Certificate object for the domain and save that as well
 	ctdomain := sums.Domain() + "." + domain
-	err = gc.Put(context.Background(), ctdomain, sha256file)
+	err = r.GitCache.Put(context.Background(), ctdomain, sha256file)
 	if err != nil {
 		fmt.Printf("git put error: %v", err)
 		http.Error(resp, "internal service error", http.StatusInternalServerError)
@@ -137,7 +150,17 @@ func server(cmd *cobra.Command, args []string) {
 	if err != nil {
 		panic(err)
 	}
-	http.HandleFunc("/", sumRepo(*pubgc).handler)
+	rr := promauto.NewCounterVec(prometheus.CounterOpts{
+		Name: "rget_project_requests",
+		Help: "Total number of requests for a particular project",
+	}, []string{"method", "project"})
+
+	rs := rgetServer{
+		GitCache: pubgc,
+		projReqs: rr,
+	}
+
+	http.HandleFunc("/", rs.handler)
 
 	privgc, err := gitcache.NewGitCache(privgit, &auth, "private")
 	if err != nil {
@@ -164,6 +187,18 @@ func server(cmd *cobra.Command, args []string) {
 	}
 	go func() {
 		err := s.ListenAndServeTLS("", "")
+		if err != nil {
+			panic(err)
+		}
+	}()
+
+	ms := &http.Server{
+		Addr:    ":2112",
+		Handler: promhttp.Handler(),
+	}
+
+	go func() {
+		err := ms.ListenAndServe()
 		if err != nil {
 			panic(err)
 		}
