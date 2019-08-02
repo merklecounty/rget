@@ -24,10 +24,10 @@ Download the appropriate release from https://github.com/merklecounty/rget/relea
 
 ## Example Usage
 
-Use rget to grab the source of a dummy project and verify that the contents are publicly recorded.
+Use rget to download the v0.0.6 rget release for linux and verify that the contents are publicly recorded.
 
 ```
-rget https://api.github.com/repos/philips/releases-test/zipball/v2.0
+rget https://github.com/merklecounty/rget/releases/download/v0.0.6/rget-v0.0.6-linux-amd64.tar.gz
 ```
 
 ## Developer Usage
@@ -37,13 +37,13 @@ rget https://api.github.com/repos/philips/releases-test/zipball/v2.0
 Generate SHA256SUMS for a GitHub release and upload to the GitHub releases page
 
 ```
-rget github publish-release-sums https://github.com/philips/releases-test/releases/tag/v2.0
+rget github publish-release-sums https://github.com/merklecounty/rget/releases/tag/v0.0.6
 ```
 
 ### Submit a SHA256SUMS to the log
 
 ```
-rget submit https://github.com/philips/releases-test/releases/download/v2.0/SHA256SUMS
+rget submit https://github.com/merklecounty/rge/releases/download/v0.0.6/SHA256SUMS
 ```
 
 ## Administration Usage
