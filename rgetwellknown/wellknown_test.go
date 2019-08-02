@@ -51,3 +51,38 @@ func TestSumPrefix(t *testing.T) {
 		}
 	}
 }
+
+func TestTrimDigestDomain(t *testing.T) {
+	testCases := []struct {
+		domain  string
+		want    string
+		wantErr bool
+	}{
+		{"2fcd82bbae7bcf7c0b0c5a2f91d3dd93.1e7c7be8587808ee85b347412ffa7514.v0-0-4.rget.merklecounty.github.com.recorder.merklecounty.com", "v0-0-4.rget.merklecounty.github.com", false},
+		// digest too short
+		{"1.2.v0-0-4.rget.merklecounty.github.com.recorder.merklecounty.com", "", true},
+		// domain too short
+		{"2fcd82bbae7bcf7c0b0c5a2f91d3dd93.1e7c7be8587808ee85b347412ffa7514.recorder.merklecounty.com", "", true},
+		// wrong domain
+		{"2fcd82bbae7bcf7c0b0c5a2f91d3dd93.1e7c7be8587808ee85b347412ffa7514.example.com", "", true},
+	}
+
+	for ti, tt := range testCases {
+		dd, err := TrimDigestDomain(tt.domain)
+		if !tt.wantErr && err != nil {
+			t.Errorf("%d: error from TrimDigestDomain %v: %v", ti, tt.domain, err)
+		}
+
+		if tt.wantErr {
+			if err == nil {
+				t.Errorf("%d: wanted err got nil", ti)
+			}
+			continue
+		}
+
+		if dd != tt.want {
+			t.Errorf("%d: domain %v != %v", ti, dd, tt.want)
+		}
+	}
+
+}

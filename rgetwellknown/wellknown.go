@@ -99,6 +99,26 @@ func SumPrefix(target string) (string, error) {
 	return match["sumPrefix"], nil
 }
 
+// TrimDigest removes the two 16 digit hex subdomains and the record.merklecounty.com
+// parts to make a domain slug that can be used for project tracking
+func TrimDigestDomain(domain string) (string, error) {
+	if !strings.HasSuffix(domain, "."+PublicServiceHost) {
+		return "", errors.New("incorrect domain suffix")
+	}
+	domain = strings.TrimSuffix(domain, "."+PublicServiceHost)
+
+	parts := strings.Split(domain, ".")
+	if len(parts) < 3 {
+		return "", errors.New("domain too short")
+	}
+
+	if len(parts[0]) != 32 && len(parts[1]) != 32 {
+		return "", errors.New("digest part too short")
+	}
+
+	return strings.Join(parts[2:], "."), nil
+}
+
 var errUnknownSite = errors.New("no domain translation logic for this URL")
 
 // expand rewrites s to replace {k} with match[k] for each key k in match.
