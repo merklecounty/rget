@@ -14,7 +14,7 @@ spec:
     spec:
       containers:
       - name: sgetserve
-        image: quay.io/established/sget
+        image: quay.io/merklecounty/rget
         imagePullPolicy: Always
         env:
         - name: PUBLIC_REPO
