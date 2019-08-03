@@ -38,7 +38,7 @@ x Have github subcommands take a URL not flags for project, org, tag
 x Take github credentials via environment variables
 x Submit automatically after github publish happens - printed out submit instead
 x Print out an rget command after submission for a user to test
-- Add prometheus metrics exporting for GET requests and submission requests and hook up to stackdriver
+x Add prometheus metrics exporting for GET requests and submission requests and hook up to stackdriver
 - Use a different path for submissions. probably /submit or something
 - Introduce rget check to check a URL works and when the certificate was issued, etc
 - Make the rget root command output more useful output

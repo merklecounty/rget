@@ -1,0 +1,13 @@
+apiVersion: monitoring.coreos.com/v1
+kind: ServiceMonitor
+metadata:
+  name: sserve
+  labels:
+    name: sserve
+spec:
+  selector:
+    matchLabels:
+      name: sserve
+  endpoints:
+  - port: metrics
+    path: /
