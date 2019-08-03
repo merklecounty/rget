@@ -2,6 +2,8 @@ apiVersion: v1
 kind: Service
 metadata:
   name: sserve-service
+  labels: 
+    name: sserve
 spec:
   type: LoadBalancer
   ports:
@@ -9,5 +11,7 @@ spec:
     name: http
   - port: 443
     name: https
+  - port: 2112
+    name: metrics
   selector:
     name: sserve
