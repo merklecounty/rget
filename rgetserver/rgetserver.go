@@ -48,7 +48,7 @@ func init() {
 <h2>Merkle County</h2>
 <ul>
   <li><a href="https://merklecounty.substack.com">Newsletter and Blog</a></li>
-  <li><a href="https://go.merklecounty.com/rget">GitHub</a></li>
+  <li><a href="https://github.com/merklecounty/rget">GitHub</a></li>
   <li><a href="https://go.merklecounty.com">Go Packages</a></li>
 </ul>
 </body>
