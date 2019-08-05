@@ -53,10 +53,10 @@ spec:
     image: gcr.io/stackdriver-prometheus/stackdriver-prometheus-sidecar:0.4.3
     imagePullPolicy: Always
     args:
-    - --stackdriver.project-id=onchain-dev
+    - --stackdriver.project-id=ifup-dev-gke
     - --prometheus.wal-directory=/prometheus/wal
     - --stackdriver.kubernetes.location=us-central1-a
-    - --stackdriver.kubernetes.cluster-name=ifup-dev-gke
+    - --stackdriver.kubernetes.cluster-name=onchain-dev
     ports:
     - name: sidecar
       containerPort: 9091
