@@ -3,6 +3,7 @@
 [![Go Report Card](https://goreportcard.com/badge/github.com/merklecounty/rget)](https://goreportcard.com/report/github.com/merklecounty/rget)
 [![Docker Repository on Quay](https://quay.io/repository/merklecounty/rget/status "Docker Repository on Quay")](https://quay.io/repository/merklecounty/rget)
 [![Build Status](https://semaphoreci.com/api/v1/merklecounty/rget/branches/master/badge.svg)](https://semaphoreci.com/merklecounty/rget)
+[![GoDoc](https://godoc.org/go.merklecounty.com/rget?status.svg)](https://godoc.org/go.merklecounty.com/rget)
 
 **Alpha Warning**: rget works as described but has minimal testing, no peer review, and no load testing. Please test the tool and provide feedback.
 
