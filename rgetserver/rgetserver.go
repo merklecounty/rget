@@ -28,6 +28,7 @@ type release struct {
 
 var (
 	releaseTemplate *template.Template
+	rootTemplate    *template.Template
 )
 
 func init() {
@@ -40,11 +41,29 @@ func init() {
 </ul>
 </body>
 </html>`))
+
+	rootTemplate = template.Must(template.New("root").Parse(`<html>
+<head><title>Merkle County</title></head>
+<body>
+<h2>Merkle County</h2>
+<ul>
+  <li><a href="https://merklecounty.substack.com">Newsletter and Blog</a></li>
+  <li><a href="https://github.com/merklecounty/rget">GitHub</a></li>
+  <li><a href="https://go.merklecounty.com">Go Packages</a></li>
+</ul>
+</body>
+</html>`))
+
 }
 
 func (s Server) ReleaseHandler(resp http.ResponseWriter, req *http.Request) {
 	if req.Method != "GET" {
 		http.Error(resp, "only GET is supported", http.StatusBadRequest)
+		return
+	}
+
+	if req.Host == rgetwellknown.PublicServiceHost {
+		rootTemplate.Execute(resp, nil)
 		return
 	}
 
