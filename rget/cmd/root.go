@@ -36,9 +36,9 @@ import (
 	"github.com/google/certificate-transparency-go/x509"
 	"github.com/google/certificate-transparency-go/x509util"
 
-	"github.com/merklecounty/rget/rgetct"
-	"github.com/merklecounty/rget/rgethash"
-	"github.com/merklecounty/rget/rgetwellknown"
+	"go.merklecounty.com/rget/rgetct"
+	"go.merklecounty.com/rget/rgethash"
+	"go.merklecounty.com/rget/rgetwellknown"
 )
 
 var cfgFile string

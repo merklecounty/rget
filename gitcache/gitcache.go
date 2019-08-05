@@ -1,4 +1,4 @@
-package gitcache
+package gitcache // import "go.merklecounty.com/rget/gitcache"
 
 import (
 	"context"
@@ -14,7 +14,7 @@ import (
 	"gopkg.in/src-d/go-git.v4/plumbing/object"
 	"gopkg.in/src-d/go-git.v4/plumbing/transport"
 
-	"github.com/merklecounty/rget/autocert"
+	"go.merklecounty.com/rget/autocert"
 )
 
 type GitCache struct {

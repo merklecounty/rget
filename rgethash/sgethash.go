@@ -1,4 +1,4 @@
-package rgethash
+package rgethash // import "go.merklecounty.com/rget/rgethash"
 
 import (
 	"bufio"
@@ -16,9 +16,9 @@ import (
 	"github.com/google/trillian/merkle/rfc6962"
 	"golang.org/x/net/context/ctxhttp"
 
-	"github.com/merklecounty/rget/autocert"
-	"github.com/merklecounty/rget/gitcache"
-	"github.com/merklecounty/rget/rgetwellknown"
+	"go.merklecounty.com/rget/autocert"
+	"go.merklecounty.com/rget/gitcache"
+	"go.merklecounty.com/rget/rgetwellknown"
 )
 
 type URLSum struct {

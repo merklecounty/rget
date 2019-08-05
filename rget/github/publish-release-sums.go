@@ -12,9 +12,9 @@ import (
 	"github.com/spf13/cobra"
 	"golang.org/x/oauth2"
 
-	"github.com/merklecounty/rget/rgetgithub"
-	"github.com/merklecounty/rget/rgethash"
-	"github.com/merklecounty/rget/rgetwellknown"
+	"go.merklecounty.com/rget/rgetgithub"
+	"go.merklecounty.com/rget/rgethash"
+	"go.merklecounty.com/rget/rgetwellknown"
 )
 
 var publishReleaseSumsCmd = &cobra.Command{

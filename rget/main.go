@@ -12,9 +12,9 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-package main
+package main // import "go.merklecounty.com/rget"
 
-import "github.com/merklecounty/rget/rget/cmd"
+import "go.merklecounty.com/rget/rget/cmd"
 
 func main() {
 	cmd.Execute()

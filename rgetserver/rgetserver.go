@@ -1,4 +1,4 @@
-package rgetserver
+package rgetserver // import "go.merklecounty.com/rgetserver"
 
 import (
 	"context"
@@ -11,9 +11,9 @@ import (
 
 	"github.com/prometheus/client_golang/prometheus"
 
-	"github.com/merklecounty/rget/gitcache"
-	"github.com/merklecounty/rget/rgethash"
-	"github.com/merklecounty/rget/rgetwellknown"
+	"go.merklecounty.com/rget/gitcache"
+	"go.merklecounty.com/rget/rgethash"
+	"go.merklecounty.com/rget/rgetwellknown"
 )
 
 type Server struct {
@@ -48,7 +48,7 @@ func init() {
 <h2>Merkle County</h2>
 <ul>
   <li><a href="https://merklecounty.substack.com">Newsletter and Blog</a></li>
-  <li><a href="https://github.com/merklecounty/rget">GitHub</a></li>
+  <li><a href="https://go.merklecounty.com/rget">GitHub</a></li>
   <li><a href="https://go.merklecounty.com">Go Packages</a></li>
 </ul>
 </body>

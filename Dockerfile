@@ -1,7 +1,7 @@
 # Start by building the application.
 FROM golang:1.12 as build
 
-WORKDIR /go/src/github.com/merklecounty/rget
+WORKDIR /go/src/go.merklecounty.com/rget
 COPY . .
 
 ENV GO111MODULE=on

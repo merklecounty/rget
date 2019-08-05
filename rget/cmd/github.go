@@ -17,7 +17,7 @@ package cmd
 import (
 	"github.com/spf13/cobra"
 
-	"github.com/merklecounty/rget/rget/github"
+	"go.merklecounty.com/rget/rget/github"
 )
 
 // githubCmd represents the github command

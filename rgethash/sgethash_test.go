@@ -8,10 +8,10 @@ import (
 	"reflect"
 	"testing"
 
-	"github.com/merklecounty/rget/autocert"
-	"github.com/merklecounty/rget/gitcache"
-	"github.com/merklecounty/rget/internal/testutil"
-	"github.com/merklecounty/rget/rgetwellknown"
+	"go.merklecounty.com/rget/autocert"
+	"go.merklecounty.com/rget/gitcache"
+	"go.merklecounty.com/rget/internal/testutil"
+	"go.merklecounty.com/rget/rgetwellknown"
 )
 
 func TestDomain(t *testing.T) {

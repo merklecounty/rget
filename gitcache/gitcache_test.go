@@ -10,7 +10,7 @@ import (
 
 	"gopkg.in/src-d/go-git.v4"
 
-	"github.com/merklecounty/rget/internal/testutil"
+	"go.merklecounty.com/rget/internal/testutil"
 )
 
 func TestPrefix(t *testing.T) {

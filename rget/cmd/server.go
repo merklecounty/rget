@@ -27,10 +27,10 @@ import (
 	"github.com/spf13/cobra"
 	githttp "gopkg.in/src-d/go-git.v4/plumbing/transport/http"
 
-	"github.com/merklecounty/rget/autocert"
-	"github.com/merklecounty/rget/gitcache"
-	"github.com/merklecounty/rget/rgethash"
-	"github.com/merklecounty/rget/rgetserver"
+	"go.merklecounty.com/rget/autocert"
+	"go.merklecounty.com/rget/gitcache"
+	"go.merklecounty.com/rget/rgethash"
+	"go.merklecounty.com/rget/rgetserver"
 )
 
 // serverCmd represents the server command

@@ -21,8 +21,8 @@ import (
 	"net/url"
 	"os"
 
-	"github.com/merklecounty/rget/rgetgithub"
-	"github.com/merklecounty/rget/rgetwellknown"
+	"go.merklecounty.com/rget/rgetgithub"
+	"go.merklecounty.com/rget/rgetwellknown"
 	"github.com/spf13/cobra"
 )
 

@@ -1,4 +1,4 @@
-module github.com/merklecounty/rget
+module go.merklecounty.com/rget
 
 go 1.12
 
