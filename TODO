@@ -1,44 +1,9 @@
-# MVP
-
-## MVP - Single File GH Release Test
-
-Use: Create a certificate for the tar ball release of a GitHub release only.
-Proof points:
-x Create sub commands via cobra
-x Sha256sum generation from GitHub
-x Git log for sha files generated from Github
-x Webservice serving up sha files for wildcard domain from git
-x Request/issue Let's Encrypt certificate
-x Check CT log entry on crt.sh via a subcommand
-x Verify CT log entry in program via a subcommand
-x Verify file URL SHA256Sum is in SHA256Sum returned by server
-x Verify SHA256Sum value matches domain merkle root
-
-## MVP+0.5 - Generate certificates
-x Create container for sget serve
-x Use autocert to create API endpoint certificate
-x Create Kubernetes manifests for sget serve
-x Get sget serve running on Kubernetes cluster behind established.ifup.org load balancer
-x Use autocert to create certificates for first few sum files
-x Prefix code isn't working right
-x Debug lack of SANs on cert issued by autocert....
-x Figure out this error: 403 urn:acme:error:unauthorized: Error creating new cert :: authorizations for these names not found or expired: 6b2b7417b25c229e550386dfc136858d.9b008b51aa16772272cf33b2cc1aee22.established.ifup.org, 6b2b7417b25c229e550386dfc136858d.9b008b51aa16772272cf33b2cc1aee22.v1-0.releases-test.philips.github.com.established.ifup.org
-x Add flag to submit to a different URL and add a default
-
-## MVP+1 - Guess at SHA256Sum location
-
-Use: let publisher put the SHA256Sum somewhere and download it to guess at domain
-x Create subcommand to generate SHA256Sum for user to upload
-x Create URL guesser for SHA256Sum file
-x Generate CT URL based on the URL guess
-x Ensure embedded SCT check also checks CN
-x Have github subcommands take a URL not flags for project, org, tag
-
 # Public Release
 x Take github credentials via environment variables
 x Submit automatically after github publish happens - printed out submit instead
 x Print out an rget command after submission for a user to test
 x Add prometheus metrics exporting for GET requests and submission requests and hook up to stackdriver
+x Implement vanity import path https://sagikazarmark.hu/blog/vanity-import-paths-in-go/
 - Use a different path for submissions. probably /submit or something
 - Introduce rget check to check a URL works and when the certificate was issued, etc
 - Make the rget root command output more useful output
@@ -59,7 +24,6 @@ x Add prometheus metrics exporting for GET requests and submission requests and 
 - Add a test script that tries a GitHub project without SHA256SUMS
 - Add test script that uses a self-signed TLS certificate not in the log
 - Define roadmap for self-hosting
-- Implement vanity import path https://sagikazarmark.hu/blog/vanity-import-paths-in-go/
 
 ## PR+1 - All file GH Release Test
 
