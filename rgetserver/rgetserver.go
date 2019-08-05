@@ -3,6 +3,7 @@ package rgetserver
 import (
 	"context"
 	"fmt"
+	"html/template"
 	"io/ioutil"
 	"net/http"
 	"os"
@@ -20,7 +21,24 @@ type Server struct {
 	ProjReqs *prometheus.CounterVec
 }
 
-func (r Server) ReleaseHandler(resp http.ResponseWriter, req *http.Request) {
+type release struct {
+	Full  string
+	Short string
+}
+
+var (
+	releaseTemplate *template.Template
+)
+
+func init() {
+	releaseTemplate = template.Must(template.New("release").Parse(`<h2>{{.Short}}</h2>
+<ul>
+  <li><a href="https://github.com/merklecounty/records/blob/master/{{.Full}}">Merkle County Record</a></li>
+</ul>
+`))
+}
+
+func (s Server) ReleaseHandler(resp http.ResponseWriter, req *http.Request) {
 	if req.Method != "GET" {
 		http.Error(resp, "only GET is supported", http.StatusBadRequest)
 		return
@@ -31,12 +49,13 @@ func (r Server) ReleaseHandler(resp http.ResponseWriter, req *http.Request) {
 		fmt.Printf("request for unknown host %v unable to parse: %v\n", req.Host, err)
 	}
 	if len(short) > 0 {
-		r.ProjReqs.WithLabelValues(req.Method, short).Inc()
+		s.ProjReqs.WithLabelValues(req.Method, short).Inc()
 	}
 
 	full := strings.TrimSuffix(req.Host, "."+rgetwellknown.PublicServiceHost)
-	fmt.Fprintf(resp, "<h2>%s</h2>", short)
-	fmt.Fprintf(resp, "<a href=\"https://github.com/merklecounty/records/blob/master/%s\">Merkle County Record</a>", full)
+
+	r := &release{Full: full, Short: short}
+	releaseTemplate.Execute(resp, r)
 
 	return
 }
