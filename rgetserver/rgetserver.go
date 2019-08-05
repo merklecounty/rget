@@ -31,11 +31,15 @@ var (
 )
 
 func init() {
-	releaseTemplate = template.Must(template.New("release").Parse(`<h2>{{.Short}}</h2>
+	releaseTemplate = template.Must(template.New("release").Parse(`<html>
+<head><title>{{.Short}} - Merkle County</title></head>
+<body>
+<h2>{{.Short}}</h2>
 <ul>
   <li><a href="https://github.com/merklecounty/records/blob/master/{{.Full}}">Merkle County Record</a></li>
 </ul>
-`))
+</body>
+</html>`))
 }
 
 func (s Server) ReleaseHandler(resp http.ResponseWriter, req *http.Request) {
