@@ -25,10 +25,10 @@ Download the appropriate release from https://github.com/merklecounty/rget/relea
 
 ## Example Usage
 
-Use rget to download the v0.0.6 rget release for linux and verify that the contents are publicly recorded.
+Use rget to download the v3.3.13 [etcd](https://etcd.io) release for macOS and verify that the contents are publicly recorded.
 
 ```
-rget https://github.com/merklecounty/rget/releases/download/v0.0.6/rget-v0.0.6-linux-amd64.tar.gz
+rget https://github.com/etcd-io/etcd/releases/download/v3.3.13/etcd-v3.3.13-darwin-amd64.zip
 ```
 
 ## Developer Usage
