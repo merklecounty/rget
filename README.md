@@ -39,14 +39,17 @@ It takes two commands to make a release available for verified download with rge
 
 ```
 rget github publish-release-sums https://github.com/merklecounty/rget/releases/tag/v0.0.6
-
-rget submit https://github.com/merklecounty/rge/releases/download/v0.0.6/SHA256SUMS
 ```
+
 The first command will start a local web server and open a Github authorization URL
 in your browser. You will have 120 seconds to authorize it.
 
 When authorized, it will calculate SHA256 sums for every file in the release,
 create a `SHA256SUMS` file, and add it to the Github release.
+
+```
+rget submit https://github.com/merklecounty/rget/releases/download/v0.0.6/SHA256SUMS
+```
 
 The second command will submit the sums to the log.
 
