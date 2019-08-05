@@ -17,7 +17,6 @@ package cmd
 import (
 	"context"
 	"fmt"
-	"io/ioutil"
 	"log"
 	"net/http"
 	"os"
@@ -31,7 +30,7 @@ import (
 	"github.com/merklecounty/rget/autocert"
 	"github.com/merklecounty/rget/gitcache"
 	"github.com/merklecounty/rget/rgethash"
-	"github.com/merklecounty/rget/rgetwellknown"
+	"github.com/merklecounty/rget/rgetserver"
 )
 
 // serverCmd represents the server command
@@ -45,84 +44,6 @@ git repos one with TLS secrets and one with public data that can be audited.`,
 
 func init() {
 	rootCmd.AddCommand(serverCmd)
-}
-
-type rgetServer struct {
-	*gitcache.GitCache
-	projReqs *prometheus.CounterVec
-}
-
-func (r rgetServer) handler(resp http.ResponseWriter, req *http.Request) {
-	if req.Method != "POST" {
-		domain, err := rgetwellknown.TrimDigestDomain(req.Host)
-		if err != nil {
-			fmt.Printf("request for unknown host %v unable to parse: %v\n", req.Host, err)
-		}
-		if len(domain) > 0 {
-			r.projReqs.WithLabelValues(req.Method, domain).Inc()
-		}
-		http.Error(resp, "only POST is supported", http.StatusBadRequest)
-		return
-	}
-
-	err := req.ParseForm()
-	if err != nil {
-		http.Error(resp, "invalid request", http.StatusBadRequest)
-		return
-	}
-
-	sumsURL := req.Form.Get("url")
-	fmt.Printf("submission: %v\n", sumsURL)
-
-	// ensure the URL is coming from a host we know how to generate a
-	// domain for by parsing it using the wellknown libraries
-	domain, err := rgetwellknown.Domain(sumsURL)
-	if err != nil {
-		fmt.Printf("wellknown domain error: %v\n", err)
-		resp.WriteHeader(http.StatusOK)
-		return
-	}
-
-	r.projReqs.WithLabelValues(req.Method, domain).Inc()
-
-	// Step 1: Download the SHA256SUMS that is correct for the URL
-	response, err := http.Get(sumsURL)
-	var sha256file []byte
-	if err != nil {
-		fmt.Printf("%s", err)
-		os.Exit(1)
-	} else {
-		var err error
-		defer response.Body.Close()
-		sha256file, err = ioutil.ReadAll(response.Body)
-		if err != nil {
-			fmt.Printf("%s", err)
-			os.Exit(1)
-		}
-	}
-
-	sums := rgethash.FromSHA256SumFile(string(sha256file))
-
-	// Step 2: Save the file contents to the git repo by domain
-	_, err = r.GitCache.Get(context.Background(), sums.Domain())
-	if err == nil {
-		// TODO(philips): add rate limiting and DDoS protections here
-		fmt.Printf("cache hit: %v\n", sumsURL)
-		resp.WriteHeader(http.StatusOK)
-		return
-	}
-
-	// Step 3. Create the Certificate object for the domain and save that as well
-	ctdomain := sums.Domain() + "." + domain
-	err = r.GitCache.Put(context.Background(), ctdomain, sha256file)
-	if err != nil {
-		fmt.Printf("git put error: %v", err)
-		http.Error(resp, "internal service error", http.StatusInternalServerError)
-		return
-	}
-
-	resp.WriteHeader(http.StatusOK)
-	return
 }
 
 func server(cmd *cobra.Command, args []string) {
@@ -155,12 +76,13 @@ func server(cmd *cobra.Command, args []string) {
 		Help: "Total number of requests for a particular project",
 	}, []string{"method", "project"})
 
-	rs := rgetServer{
+	rs := rgetserver.Server{
 		GitCache: pubgc,
-		projReqs: rr,
+		ProjReqs: rr,
 	}
 
-	http.HandleFunc("/", rs.handler)
+	http.HandleFunc("/", rs.ReleaseHandler)
+	http.HandleFunc("/api/", rs.APIHandler)
 
 	privgc, err := gitcache.NewGitCache(privgit, &auth, "private")
 	if err != nil {

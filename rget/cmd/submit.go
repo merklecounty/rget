@@ -41,7 +41,7 @@ func init() {
 }
 
 func submit(cmd *cobra.Command, args []string) {
-	resp, err := http.PostForm("https://"+rgetwellknown.PublicServiceHost, url.Values{
+	resp, err := http.PostForm("https://"+rgetwellknown.PublicServiceHost+"/api/v1/submit", url.Values{
 		"url": {args[0]},
 	})
 	defer resp.Body.Close()
