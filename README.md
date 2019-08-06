@@ -70,6 +70,8 @@ rget server <public git repo> <private certificates git repo>
 
 ## FAQ
 
+If you have a question that isn't answered here please [open an issue](https://github.com/merklecounty/rget/issues/new) or [start a discussion on the mailing list](https://groups.google.com/forum/#!forum/rget)
+
 - **Q**: Where did this idea come from?
 - **A**: This project builds upon a design doc for [Binary Transparency](https://wiki.mozilla.org/Security/Binary_Transparency) originally designed for the Mozilla Firefox project. 
 
