@@ -51,7 +51,14 @@ create a `SHA256SUMS` file, and add it to the Github release.
 rget submit https://github.com/merklecounty/rget/releases/download/v0.0.6/SHA256SUMS
 ```
 
-The second command will submit the sums to the log.
+The second command will submit the sums to the log. This does not use any GitHub credentials.
+
+**Note:** If a project has release automation that uploads to GitHub simply add
+the creation of SHA256SUMS to the automation instead of using `github
+publish-release-sums` and call `rget submit` after uploading. See the
+[integrations doc](Documentation/integrations.md) for a list of tools that work
+out of the box. As an example `rget` uses [Go
+Releaser](https://goreleaser.com/) for automation.
 
 ## Administration Usage
 
