@@ -37,6 +37,7 @@ func CheckX509(ctx context.Context, lf logInfoFactory, chain []*x509.Certificate
 		issuer, err = x509util.GetIssuer(leaf, hc)
 		if err != nil {
 			fmt.Printf("Failed to get issuer online: %v\n", err)
+			return
 		}
 	} else {
 		issuer = chain[1]
