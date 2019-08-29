@@ -1,4 +1,4 @@
-package rgetserver // import "go.merklecounty.com/rgetserver"
+package rgetserver // import "go.merklecounty.com/rget/rgetserver"
 
 import (
 	"context"
