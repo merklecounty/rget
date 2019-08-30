@@ -133,6 +133,10 @@ func get(cmd *cobra.Command, args []string) {
 
 	// Step 1: Download the SHA256SUMS that is correct for the URL
 	prefix, err := rgetwellknown.SumPrefix(durl)
+	if err != nil {
+		fmt.Printf("%s\n", err)
+		os.Exit(1)
+	}
 	sumsURL := prefix + "SHA256SUMS"
 	fmt.Printf("downloading sums: %v\n", sumsURL)
 	response, err := http.Get(sumsURL)
