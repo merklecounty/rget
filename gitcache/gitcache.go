@@ -82,6 +82,9 @@ func NewGitCache(url string, auth transport.AuthMethod, dir string) (*GitCache, 
 		}
 
 		err = w.Pull(&git.PullOptions{RemoteName: "origin"})
+		if err != nil {
+			return nil, err
+		}
 	}
 
 	ref, err := gc.repo.Head()
@@ -166,6 +169,10 @@ func (g GitCache) commit(ctx context.Context, name, verb string) error {
 			When:  time.Now(),
 		},
 	})
+
+	if err != nil {
+		return err
+	}
 
 	fmt.Println(status)
 	obj, err := g.repo.CommitObject(co)
